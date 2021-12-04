@@ -195,6 +195,7 @@ const startFL = async (url, modelName, modelVersion) => {
   betasArray = tf.tensor(betasArray);
   updateStatus("New reward and sampled vector", rewardVector, sampledVector);
 
+  // update alphas and betas
   const newAlphaBetas = bandit_thompson(
     rewardVector,
     sampledVector,
@@ -217,8 +218,8 @@ const startFL = async (url, modelName, modelVersion) => {
     JSON.stringify({
       reward_vector: rewardVector.dataSync(),
       sample_vector: sampledVector.dataSync(),
-      alphas: alphasArray.dataSync(),
-      betas: betasArray.dataSync(),
+      alphas: alphas.dataSync(),
+      betas: betas.dataSync(),
     }),
   ]);
 };
