@@ -5,26 +5,19 @@ import json
 
 PORT = 1234
 print("Started the server and its listening on port: " + str(PORT))
+
+# global weights
 alphas = [1] * 24
 betas = [1] * 24
+sample_vector = [1] * 24
+reward_vector = [1] * 24
 
-
-def bandit_thompson(reward, sample_vector, alphas, betas):
-    prev_alpha = alphas
-    prev_beta = betas
-    print(type(prev_alpha), type(reward), reward)
-
-    # alphas = prev_alpha.add(reward)
-    # betas = prev_beta.add(sample_vector.sub(reward))
-    alphas = [a + reward[0] for a in prev_alpha]
-    sv = [s - reward[0] for s in sample_vector]
-    betas = [s + b for s, b in zip(sv, prev_beta)]
-
-    return (alphas, betas)
+# model queue
+worker_models = []
 
 
 async def echo(websocket, path):
-    global alphas, betas
+    global alphas, betas, worker_models, sample_vector, reward_vector
 
     print("A client just connected")
     async for message in websocket:
@@ -32,18 +25,39 @@ async def echo(websocket, path):
         received_messages = message.split(",", 1)
         print("action", received_messages[0])
         response = {}
-        if received_messages[0] == "run_plan":
-            j_message = json.loads(received_messages[1])
-            print("json:", j_message)
-            reward, sample_vector, alphas, betas = (
-                j_message["rV"],
-                j_message["sV"],
-                j_message["al"],
-                j_message["bt"],
+        if received_messages[0] == "update":
+            weights = json.loads(received_messages[1])
+            w_alphas, w_betas, w_reward_vector, w_sample_vector = (
+                list(weights["alphas"].values()),
+                list(weights["betas"].values()),
+                list(weights["reward_vector"].values()),
+                list(weights["sample_vector"].values()),
             )
-            alphas, betas = bandit_thompson(reward, sample_vector, alphas, betas)
-            print("updated alphas:{} betas:{}".format(alphas, betas))
-            response = {"type": "updated_params", "params": {"al": alphas, "bt": betas}}
+            worker_models.append([w_alphas, w_betas, w_reward_vector, w_sample_vector])
+            print("no of elements in weights queue:", len(worker_models))
+            response = {"type": "update", "message": "successfully updated"}
+
+            # Average weights if we have weights from more than 1 worker
+            if len(worker_models) > 1:
+                for worker in worker_models:
+                    alphas = [x + y for (x, y) in zip(alphas, worker[0])]
+                    betas = [x + y for (x, y) in zip(betas, worker[1])]
+                    reward_vector = [x + y for (x, y) in zip(reward_vector, worker[2])]
+                    sample_vector = [x + y for (x, y) in zip(sample_vector, worker[3])]
+
+                alphas = [elem / len(worker_models) for elem in alphas]
+                betas = [elem / len(worker_models) for elem in betas]
+                reward_vector = [elem / len(worker_models) for elem in reward_vector]
+                sample_vector = [elem / len(worker_models) for elem in sample_vector]
+
+                print("Updated", alphas, betas, reward_vector, sample_vector)
+
+                # reset the weights queues
+                worker_models = []
+                response = {"type": "avg", "message": "successfully updated"}
+
+            return response
+
         elif received_messages[0] == "connection":
             response = {"type": "params", "params": {"al": alphas, "bt": betas}}
         await websocket.send(json.dumps(response))
