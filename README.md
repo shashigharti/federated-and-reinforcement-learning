@@ -2,7 +2,6 @@
 
 This is a research project related to reinforcement learning/multiarmed bandit/federated learing which is ongoing.
 
-# Team member
+# Team Lead
 
-Maddie Shang (Lead)
-Shashi Gharti
+- Maddie Shang (Lead)
