@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import * as tf from "@tensorflow/tfjs-core";
 const { jStat } = require("jstat");
 import Plot from "react-plotly.js";
+import { processPlot, argMax, banditThompson } from "./common";
+import { BOOKS, BOOK_TYPES } from "./data";
 
 const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
@@ -15,35 +17,9 @@ const MainPage = () => {
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
-  const [bookTypes, setBookTypes] = useState([
-    "spiritual",
-    "philosophical",
-    "physics",
-  ]);
+  const [bookTypes, setBookTypes] = useState(BOOK_TYPES);
   const [imgSrc, setImageSrc] = useState("");
-  const [books, setBooks] = useState({
-    0: [
-      "https://m.media-amazon.com/images/I/51jBeCDwMQL.jpg",
-      "https://images.squarespace-cdn.com/content/v1/543d370ee4b0dc74d0f2af1f/1486714579875-6DKPHQ5QL44R9FJE9CF6/powerofnow.jpg",
-      "https://images-na.ssl-images-amazon.com/images/I/71oOilNesPL.jpg",
-    ],
-    1: [
-      "https://images-na.ssl-images-amazon.com/images/I/81Kr+YIWjCL.jpg",
-      "https://broadviewpress.com/wp-content/uploads/2019/11/9781554812851.jpg",
-      "https://pup-assets.imgix.net/onix/images/9780691133928.jpg",
-    ],
-    2: [
-      "https://d3nuqriibqh3vw.cloudfront.net/styles/aotw_detail_ir/s3/images/northernPhysics.jpg",
-      "https://www.basicbooks.com/wp-content/uploads/2017/09/97804650252751.jpg",
-      "http://prodimage.images-bn.com/pimages/9789388118125_p0_v2_s1200x630.jpg",
-    ],
-  });
-
-  // Arg max function
-  const argMax = (d) =>
-    Object.entries(d).filter(
-      (el) => el[1] == Math.max(...Object.values(d))
-    )[0][0];
+  const [books, setBooks] = useState(BOOKS);
 
   const selectSample = () => {
     let samplesFromBetaDist = [];
@@ -97,21 +73,6 @@ const MainPage = () => {
     };
   }, [options]);
 
-  // update alphas and betas based on user action
-  const bandit_thompson = (reward_vector, sample_vector, alphas, betas) => {
-    console.log(
-      "updating alpha beta variables",
-      alphas.dataSync(),
-      betas.dataSync()
-    );
-    const prev_alpha = alphas;
-    const prev_beta = betas;
-
-    alphas = prev_alpha.add(reward_vector);
-    betas = prev_beta.add(sample_vector.sub(reward_vector));
-    return [alphas, betas];
-  };
-
   // handle user action
   const handleClick = (reward) => () => {
     console.log("reward=>", reward);
@@ -122,7 +83,12 @@ const MainPage = () => {
     rewardVector[selectedOption] = reward; // reward
     sampledVector[selectedOption] = 1;
 
-    alphas_betas = bandit_thompson(
+    console.log(
+      "updating alpha beta variables",
+      tf.tensor(alphasArray).dataSync(),
+      tf.tensor(betasArray).dataSync()
+    );
+    alphas_betas = banditThompson(
       tf.tensor(rewardVector),
       tf.tensor(sampledVector),
       tf.tensor(alphasArray),
@@ -133,33 +99,13 @@ const MainPage = () => {
     setBetasArray(alphas_betas[1].dataSync());
 
     console.log("new alphas and betas", alphasArray, betasArray);
-
-    const x = tf.linspace(0, 1, 100).dataSync();
-
-    const colors = { 0: "red", 1: "green", 2: "blue" };
-    let plotdata = [];
-    for (let opt = 0; opt < alphasArray.length; opt++) {
-      let y = [];
-      for (let ind = 0; ind < x.length; ind++) {
-        y.push(jStat.beta.pdf(x[ind], alphasArray[opt], betasArray[opt]));
-      }
-      let d = {
-        x: x,
-        y: y,
-        name: bookTypes[opt],
-        type: "scatter",
-        mode: "lines+markers",
-        marker: { color: colors[opt] },
-      };
-      plotdata.push(d);
-    }
-    setPlotData(plotdata);
+    setPlotData(processPlot(alphasArray, betasArray, bookTypes));
 
     socket.send([
       "update",
       JSON.stringify({
         alphas: alphas_betas[0], // 0 ->  alphas
-        betas: alphas_betas[1], //1 -> betas
+        betas: alphas_betas[1], // 1 -> betas
       }),
     ]);
     selectSample();
