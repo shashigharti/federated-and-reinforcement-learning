@@ -8,6 +8,7 @@ import { BOOKS, BOOK_TYPES } from "./data";
 const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
   const socket = new WebSocket(url);
+  const dim = 3;
 
   // features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
@@ -58,14 +59,20 @@ const MainPage = () => {
     // get params from server
     socket.onopen = (message) => {
       console.log("[socket]Connecton Established");
-      socket.send(["connection", "Connection Established"]);
+      socket.send(["get-params", "Connection Established"]);
     };
+
+    // handle message received from server
     socket.onmessage = (event) => {
       const message_from_server = JSON.parse(event.data);
+
+      // sets params with the value received from the server
       if (message_from_server["type"] == "params") {
         alphasArray = message_from_server.params["al"];
         betasArray = message_from_server.params["bt"];
         console.log("Received aplhas betas", alphasArray, betasArray);
+
+        // set the values
         setAlphasArray(alphasArray);
         setBetasArray(betasArray);
       }
@@ -103,11 +110,10 @@ const MainPage = () => {
 
     setAlphasArray(alphas_betas[0].dataSync());
     setBetasArray(alphas_betas[1].dataSync());
-    console.log("new: alphas and betas", alphasArray, betasArray);
     console.log(
-      "diff: alphas and betas",
-      gradWeights[0].dataSync(),
-      gradWeights[1].dataSync()
+      "new: alphas and betas",
+      alphas_betas[0].dataSync(),
+      alphas_betas[1].dataSync()
     );
 
     // set plot data
@@ -120,6 +126,13 @@ const MainPage = () => {
     );
 
     // send data to the server
+    console.log("Sending new weights to the server");
+    console.log(
+      "diff: alphas and betas",
+      gradWeights[0].dataSync(),
+      gradWeights[1].dataSync()
+    );
+
     socket.send([
       "update",
       JSON.stringify({
@@ -127,6 +140,12 @@ const MainPage = () => {
         betas: gradWeights[1].dataSync(), // 1 -> betas
       }),
     ]);
+
+    // get new values of params (alpha, beta)
+    socket.send(["get-params", ""]);
+
+    // write code here to handle simulation if user doesn't act
+
     selectSample();
   };
   return (

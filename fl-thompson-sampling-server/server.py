@@ -20,17 +20,22 @@ async def echo(websocket, path):
     print("A client just connected")
     async for message in websocket:
         print("Received  message from client: " + message, type(message))
+
         received_messages = message.split(",", 1)
         print("action", received_messages[0])
+
         response = {}
         if received_messages[0] == "update":
+
             weights = json.loads(received_messages[1])
             w_alphas, w_betas, w_reward_vector, w_sample_vector = (
                 list(weights["alphas"].values()),
                 list(weights["betas"].values()),
             )
+
             worker_models.append([w_alphas, w_betas, w_reward_vector, w_sample_vector])
-            print("no of elements in weights queue:", len(worker_models))
+            print("no. of elements in weights queue:", len(worker_models))
+
             response = {"type": "update", "message": "successfully updated"}
 
             # Average weights if we have weights from more than 1 worker
@@ -41,8 +46,7 @@ async def echo(websocket, path):
 
                 alphas = [elem / len(worker_models) for elem in alphas]
                 betas = [elem / len(worker_models) for elem in betas]
-
-                print("Updated", alphas, betas, reward_vector, sample_vector)
+                print("Updated", alphas, betas)
 
                 # reset the weights queues
                 worker_models = []
@@ -50,8 +54,9 @@ async def echo(websocket, path):
 
             return response
 
-        elif received_messages[0] == "connection":
+        elif received_messages[0] == "get-params":
             response = {"type": "params", "params": {"al": alphas, "bt": betas}}
+
         await websocket.send(json.dumps(response))
 
 
