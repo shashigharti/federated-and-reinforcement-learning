@@ -13,7 +13,7 @@ const MainPage = () => {
   let [alphasArray, setAlphasArray] = useState([]);
   let [betasArray, setBetasArray] = useState([]);
 
-  // user options : 3 types of book
+  // user options : 3 types of books
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
@@ -21,9 +21,10 @@ const MainPage = () => {
   const [imgSrc, setImageSrc] = useState("");
   const [books, setBooks] = useState(BOOKS);
 
+  // choose the best option(with highest reward probability) among other various options; random probability using beta distribution
   const selectSample = () => {
     let samplesFromBetaDist = [];
-    // For each option...
+    // for each option...
     for (let opt = 0; opt < alphasArray.length; opt++) {
       // Get a beta distribution between the alphas and betas
       samplesFromBetaDist[opt] = jStat.beta.sample(
@@ -45,12 +46,9 @@ const MainPage = () => {
     setOptions(Object.keys(books).length);
   }, []);
 
-  // select initial sample
+  // Take initial action on params receive from the server
   useEffect(() => {
     if (alphasArray.length == betasArray.length) {
-      console.log("updated alphasarray", alphasArray);
-      console.log("updated alphasarray", betasArray);
-
       selectSample();
     }
   }, [alphasArray, betasArray]);
@@ -97,10 +95,12 @@ const MainPage = () => {
 
     setAlphasArray(alphas_betas[0].dataSync());
     setBetasArray(alphas_betas[1].dataSync());
-
     console.log("new alphas and betas", alphasArray, betasArray);
+
+    // set plot data
     setPlotData(processPlot(alphasArray, betasArray, bookTypes));
 
+    // send data to the server
     socket.send([
       "update",
       JSON.stringify({
