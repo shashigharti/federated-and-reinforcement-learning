@@ -7,10 +7,8 @@ PORT = 1234
 print("Started the server and its listening on port: " + str(PORT))
 
 # global weights
-alphas = [1] * 24
-betas = [1] * 24
-sample_vector = [1] * 24
-reward_vector = [1] * 24
+alphas = [1] * 3
+betas = [1] * 3
 
 # model queue
 worker_models = []
@@ -30,8 +28,6 @@ async def echo(websocket, path):
             w_alphas, w_betas, w_reward_vector, w_sample_vector = (
                 list(weights["alphas"].values()),
                 list(weights["betas"].values()),
-                list(weights["reward_vector"].values()),
-                list(weights["sample_vector"].values()),
             )
             worker_models.append([w_alphas, w_betas, w_reward_vector, w_sample_vector])
             print("no of elements in weights queue:", len(worker_models))
@@ -42,13 +38,9 @@ async def echo(websocket, path):
                 for worker in worker_models:
                     alphas = [x + y for (x, y) in zip(alphas, worker[0])]
                     betas = [x + y for (x, y) in zip(betas, worker[1])]
-                    reward_vector = [x + y for (x, y) in zip(reward_vector, worker[2])]
-                    sample_vector = [x + y for (x, y) in zip(sample_vector, worker[3])]
 
                 alphas = [elem / len(worker_models) for elem in alphas]
                 betas = [elem / len(worker_models) for elem in betas]
-                reward_vector = [elem / len(worker_models) for elem in reward_vector]
-                sample_vector = [elem / len(worker_models) for elem in sample_vector]
 
                 print("Updated", alphas, betas, reward_vector, sample_vector)
 

@@ -4,9 +4,13 @@ const { jStat } = require("jstat");
 import Plot from "react-plotly.js";
 
 const MainPage = () => {
-  const url = useState("ws://127.0.0.1:1234");
-  const [alphasArray, setAlphasArray] = useState([]);
-  const [betasArray, setBetasArray] = useState([]);
+  const url = "ws://127.0.0.1:1234";
+
+  // features/parameters that determine the users action
+  let [alphasArray, setAlphasArray] = useState([]);
+  let [betasArray, setBetasArray] = useState([]);
+
+  // user options : 3 types of book
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
@@ -40,11 +44,6 @@ const MainPage = () => {
       (el) => el[1] == Math.max(...Object.values(d))
     )[0][0];
 
-  // select initial sample
-  useEffect(() => {
-    selectSample();
-  }, [alphasArray]);
-
   const selectSample = () => {
     let samplesFromBetaDist = [];
     // For each option...
@@ -69,10 +68,33 @@ const MainPage = () => {
     setOptions(Object.keys(books).length);
   }, []);
 
+  // select initial sample
+  useEffect(() => {
+    if (alphasArray.length == betasArray.length) {
+      console.log("updated alphasarray", alphasArray);
+      console.log("updated alphasarray", betasArray);
+
+      selectSample();
+    }
+  }, [alphasArray, betasArray]);
+
   useEffect(() => {
     // get alphas and betas from server
-    setAlphasArray([1, 1, 1]);
-    setBetasArray([1, 1, 1]);
+    const socket = new WebSocket(url);
+    socket.onopen = (message) => {
+      console.log("[socket]Connecton Established");
+      socket.send(["connection", "Connection Established"]);
+    };
+    socket.onmessage = (event) => {
+      const message_from_server = JSON.parse(event.data);
+      if (message_from_server["type"] == "params") {
+        alphasArray = message_from_server.params["al"];
+        betasArray = message_from_server.params["bt"];
+        console.log("Received aplhas betas", alphasArray, betasArray);
+        setAlphasArray(alphasArray);
+        setBetasArray(betasArray);
+      }
+    };
   }, [options]);
 
   // update alphas and betas based on user action
@@ -131,8 +153,15 @@ const MainPage = () => {
       };
       plotdata.push(d);
     }
-    console.log(plotdata);
     setPlotData(plotdata);
+
+    socket.send([
+      "update",
+      JSON.stringify({
+        alphas: alphas.dataSync(),
+        betas: betas.dataSync(),
+      }),
+    ]);
     selectSample();
   };
   return (
