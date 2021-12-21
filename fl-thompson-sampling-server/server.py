@@ -6,16 +6,18 @@ import json
 PORT = 1234
 print("Started the server and its listening on port: " + str(PORT))
 
+dim = 3
+
 # global weights
-alphas = [1] * 3
-betas = [1] * 3
+alphas = [1] * dim
+betas = [1] * dim
 
 # model queue
 worker_models = []
 
 
 async def echo(websocket, path):
-    global alphas, betas, worker_models, sample_vector, reward_vector
+    global alphas, betas, worker_models, dim
 
     print("A client just connected")
     async for message in websocket:
@@ -55,7 +57,10 @@ async def echo(websocket, path):
             return response
 
         elif received_messages[0] == "get-params":
-            response = {"type": "params", "params": {"al": alphas, "bt": betas}}
+            response = {
+                "type": "params",
+                "params": {"al": alphas, "bt": betas, "dim": dim},
+            }
 
         await websocket.send(json.dumps(response))
 

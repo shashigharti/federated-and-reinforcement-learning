@@ -9,6 +9,7 @@ const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
   const socket = new WebSocket(url);
   const dim = 3;
+  let [simulation, setSimulation] = useState(true);
 
   // features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
@@ -65,16 +66,27 @@ const MainPage = () => {
     // handle message received from server
     socket.onmessage = (event) => {
       const message_from_server = JSON.parse(event.data);
+      let dim_from_server = null;
 
       // sets params with the value received from the server
       if (message_from_server["type"] == "params") {
         alphasArray = message_from_server.params["al"];
         betasArray = message_from_server.params["bt"];
-        console.log("Received aplhas betas", alphasArray, betasArray);
+        dim_from_server = message_from_server.params["dim"];
+        console.log(
+          "Received aplhas betas dim",
+          alphasArray,
+          betasArray,
+          dim_from_server
+        );
 
         // set the values
-        setAlphasArray(alphasArray);
-        setBetasArray(betasArray);
+        if (dim_from_server == dim) {
+          setAlphasArray(alphasArray);
+          setBetasArray(betasArray);
+        } else {
+          console.log("Dimension size does not match. ");
+        }
       }
     };
   }, [options]);
@@ -154,8 +166,9 @@ const MainPage = () => {
         <div className='row'>
           <div className='col s8'>
             <h3>Federated Learning (Thompson Sampling - Book Sale)</h3>
-            <div>alphas array: {alphasArray.toString()}</div>
-            <div>betas array: {betasArray.toString()}</div>
+            <div>Alphas: {alphasArray.toString()}</div>
+            <div>Betas: {betasArray.toString()}</div>
+            <div>Dimension: {dim}</div>
             <div>
               <Plot data={plotdata} layout={{ title: "Distribution Plot" }} />
             </div>
