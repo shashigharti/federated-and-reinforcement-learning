@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import * as tf from "@tensorflow/tfjs-core";
 const { jStat } = require("jstat");
 import Plot from "react-plotly.js";
-import { processPlot, argMax, banditThompson, calcGradient } from "./common";
+import { argMax, processPlot, simulate, actionAndUpdate } from "./common";
 import { BOOKS, BOOK_TYPES } from "./data";
 
 const MainPage = () => {
@@ -19,7 +18,6 @@ const MainPage = () => {
 
   // user options : 3 types of books
   const [currentcycle, setCurrentcycle] = useState(0);
-  const [reward, setReward] = useState(0);
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
@@ -28,7 +26,8 @@ const MainPage = () => {
   const [books, setBooks] = useState(BOOKS);
 
   /**
-   * choose the best option(with highest reward probability) among other various options; random probability using beta distribution
+   * choose the best option(with highest reward probability) among other various options;
+   * random probability using beta distribution
    */
   const selectSample = () => {
     let samplesFromBetaDist = [];
@@ -54,7 +53,8 @@ const MainPage = () => {
     // if simulation is true, simulate the user action
     if (simulation) {
       let reward = simulate(policy, 1);
-      actionAndUpdate(alphasArray, betasArray, reward, socket);
+
+      // after simulation code will be added here
     }
   };
 
@@ -107,6 +107,11 @@ const MainPage = () => {
         alphasArray = message_from_server.params["al"];
         betasArray = message_from_server.params["bt"];
         console.log("Received updated aplhas betas", alphasArray, betasArray);
+      } else if (
+        message_from_server["type"] == "avg" ||
+        message_from_server["type"] == "update"
+      ) {
+        setCurrentcycle(currentcycle + 1);
       }
     };
   }, [options]);
@@ -117,7 +122,49 @@ const MainPage = () => {
    * @returns
    */
   const handleClick = (reward) => () => {
-    actionAndUpdate(alphasArray, betasArray, reward, socket);
+    let params = actionAndUpdate(
+      alphasArray,
+      betasArray,
+      selectedOption,
+      reward
+    );
+
+    let gradWeights, alphas_betas;
+    gradWeights = params[0];
+    alphas_betas = params[1];
+
+    setAlphasArray(alphas_betas[0].dataSync());
+    setBetasArray(alphas_betas[1].dataSync());
+    console.log(
+      "new: alphas and betas",
+      alphas_betas[0].dataSync(),
+      alphas_betas[1].dataSync()
+    );
+
+    // set plot data
+    setPlotData(
+      processPlot(
+        alphas_betas[0].dataSync(),
+        alphas_betas[1].dataSync(),
+        bookTypes
+      )
+    );
+
+    // send data to the server
+    console.log("Sending new weights to the server");
+    console.log(
+      "diff: alphas and betas",
+      gradWeights[0].dataSync(),
+      gradWeights[1].dataSync()
+    );
+
+    socket.send([
+      "update",
+      JSON.stringify({
+        alphas: gradWeights[0].dataSync(), // 0 ->  alphas
+        betas: gradWeights[1].dataSync(), // 1 -> betas
+      }),
+    ]);
   };
 
   return (

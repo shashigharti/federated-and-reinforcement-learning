@@ -1,14 +1,11 @@
 const { jStat } = require("jstat");
 import * as tf from "@tensorflow/tfjs-core";
-import * as tfp from tensorflow_probability;
-
-tfd = tfp.distributions;
 
 /**
  * Process plot data
- * @param {Array} alphasArray 
- * @param {Array} betasArray 
- * @param {Array} bookTypes 
+ * @param {Array} alphasArray
+ * @param {Array} betasArray
+ * @param {Array} bookTypes
  * @returns {Array} plotdata
  */
 const processPlot = (alphasArray, betasArray, bookTypes) => {
@@ -34,7 +31,6 @@ const processPlot = (alphasArray, betasArray, bookTypes) => {
   return plotdata;
 };
 
-
 /**
  * Get maximum value
  */
@@ -43,31 +39,30 @@ const argMax = (d) =>
     (el) => el[1] == Math.max(...Object.values(d))
   )[0][0];
 
-
 /**
  * Update alphas and betas
  * @param {Tensor1D} rewards
  * @param {Tensor1D} samples
- * @param {Tensor1D} alphas 
- * @param {Tensor1D} betas 
- * @returns 
+ * @param {Tensor1D} alphas
+ * @param {Tensor1D} betas
+ * @returns
  */
 const banditThompson = (rewards, samples, alphas, betas) => {
   const prev_alpha = alphas;
   const prev_beta = betas;
 
   alphas = prev_alpha.add(rewards);
-  betas = prev_beta.add(samples.sub(reward_vector));
+  betas = prev_beta.add(samples.sub(rewards));
   return [alphas, betas];
 };
 
 /**
  * Calculate gradients
- * @param {Tensor1D} alphas 
- * @param {Tensor1D} betas 
- * @param {Tensor1D} n_alphas 
- * @param {Tensor1D} n_betas 
- * @returns 
+ * @param {Tensor1D} alphas
+ * @param {Tensor1D} betas
+ * @param {Tensor1D} n_alphas
+ * @param {Tensor1D} n_betas
+ * @returns
  */
 const calcGradient = (alphas, betas, n_alphas, n_betas) => {
   let d_alphas, d_betas;
@@ -85,79 +80,63 @@ const calcGradient = (alphas, betas, n_alphas, n_betas) => {
 
 /**
  * Simulate user action
- * @param {Array} preferences 
- * @param {number} option_id 
- * @returns 
+ * @param {Array} preferences
+ * @param {number} option_id
+ * @returns
  */
 const simulate = (preferences, option_id) => {
-  let b = tfd.Bernoulli(preferences);
-  return b[option_id];
-}
+  // let b = tfd.Bernoulli(preferences);
+  // return b[option_id];
+  if (option_id == 0) return 1;
+  return 0;
+};
 
+const actionAndUpdate = (
+  alphasArray,
+  betasArray,
+  selectedOption,
+  reward,
+  socket
+) => {
+  console.log("reward=>", reward);
 
-const actionAndUpdate = (rewardVector, sampledVector, alphasArray, betasArray, reward, socket) => {
-  console.log("reward=>", reward); 
-
-  let alphas_betas;   
+  let alphas_betas;
   let rewardVector = [0, 0, 0];
   let sampledVector = [0, 0, 0];
 
   rewardVector[selectedOption] = reward; // reward
-    sampledVector[selectedOption] = 1;
+  sampledVector[selectedOption] = 1;
 
-    console.log(
-      "updating alpha beta variables",
-      tf.tensor(alphasArray).dataSync(),
-      tf.tensor(betasArray).dataSync()
-    );
+  console.log(
+    "updating alpha beta variables",
+    tf.tensor(alphasArray).dataSync(),
+    tf.tensor(betasArray).dataSync()
+  );
 
-    alphas_betas = banditThompson(
-      tf.tensor(rewardVector),
-      tf.tensor(sampledVector),
-      tf.tensor(alphasArray),
-      tf.tensor(betasArray)
-    );
-    let gradWeights = calcGradient(
-      tf.tensor(alphasArray),
-      tf.tensor(betasArray),
-      alphas_betas[0],
-      alphas_betas[1]
-    );
+  alphas_betas = banditThompson(
+    tf.tensor(rewardVector),
+    tf.tensor(sampledVector),
+    tf.tensor(alphasArray),
+    tf.tensor(betasArray)
+  );
+  let gradWeights = calcGradient(
+    tf.tensor(alphasArray),
+    tf.tensor(betasArray),
+    alphas_betas[0],
+    alphas_betas[1]
+  );
 
-    setAlphasArray(alphas_betas[0].dataSync());
-    setBetasArray(alphas_betas[1].dataSync());
-    console.log(
-      "new: alphas and betas",
-      alphas_betas[0].dataSync(),
-      alphas_betas[1].dataSync()
-    );
+  return [gradWeights, alphas_betas];
 
-    // set plot data
-    setPlotData(
-      processPlot(
-        alphas_betas[0].dataSync(),
-        alphas_betas[1].dataSync(),
-        bookTypes
-      )
-    );
+  // // get new values of params (alpha, beta)
+  // socket.send(["get-params", ""]);
+};
 
-    // send data to the server
-    console.log("Sending new weights to the server");
-    console.log(
-      "diff: alphas and betas",
-      gradWeights[0].dataSync(),
-      gradWeights[1].dataSync()
-    );
-
-    socket.send([
-      "update",
-      JSON.stringify({
-        alphas: gradWeights[0].dataSync(), // 0 ->  alphas
-        betas: gradWeights[1].dataSync(), // 1 -> betas
-      }),
-    ]);
-
-    // get new values of params (alpha, beta)
-    socket.send(["get-params", ""]);
-}
-export { processPlot, argMax, banditThompson, calcGradient, actionAndUpdate };
+export {
+  processPlot,
+  argMax,
+  banditThompson,
+  calcGradient,
+  simulate,
+  actionAndUpdate,
+};
