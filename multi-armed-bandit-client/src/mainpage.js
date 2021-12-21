@@ -9,13 +9,17 @@ const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
   const socket = new WebSocket(url);
   const dim = 3;
+  const stopAfter = 100;
   let [simulation, setSimulation] = useState(true);
 
   // features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
   let [betasArray, setBetasArray] = useState([]);
+  let [policy, setPolicy] = useState([]);
 
   // user options : 3 types of books
+  const [currentcycle, setCurrentcycle] = useState(0);
+  const [reward, setReward] = useState(0);
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
@@ -60,7 +64,7 @@ const MainPage = () => {
     // get params from server
     socket.onopen = (message) => {
       console.log("[socket]Connecton Established");
-      socket.send(["get-params", "Connection Established"]);
+      socket.send(["connected", "Connection Established"]);
     };
 
     // handle message received from server
@@ -69,24 +73,31 @@ const MainPage = () => {
       let dim_from_server = null;
 
       // sets params with the value received from the server
-      if (message_from_server["type"] == "params") {
+      if (message_from_server["type"] == "init-params") {
         alphasArray = message_from_server.params["al"];
         betasArray = message_from_server.params["bt"];
         dim_from_server = message_from_server.params["dim"];
+        policy = message_from_server.params["policy"];
         console.log(
-          "Received aplhas betas dim",
+          "Received aplhas betas dim policy",
           alphasArray,
           betasArray,
-          dim_from_server
+          dim_from_server,
+          policy
         );
 
         // set the values
         if (dim_from_server == dim) {
           setAlphasArray(alphasArray);
           setBetasArray(betasArray);
+          setPolicy(policy);
         } else {
           console.log("Dimension size does not match. ");
         }
+      } else if (message_from_server["type"] == "params") {
+        alphasArray = message_from_server.params["al"];
+        betasArray = message_from_server.params["bt"];
+        console.log("Received updated aplhas betas", alphasArray, betasArray);
       }
     };
   }, [options]);
@@ -156,7 +167,10 @@ const MainPage = () => {
     // get new values of params (alpha, beta)
     socket.send(["get-params", ""]);
 
-    // write code here to handle simulation if user doesn't act
+    // if simulation is true, simulate the user action
+    if (simulation) {
+      let rws = simulate(policy, 1);
+    }
 
     selectSample();
   };

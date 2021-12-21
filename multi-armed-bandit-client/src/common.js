@@ -1,6 +1,16 @@
 const { jStat } = require("jstat");
+import * as tf from "@tensorflow/tfjs-core";
+import * as tfp from tensorflow_probability;
 
-// process plot data
+tfd = tfp.distributions;
+
+/**
+ * Process plot data
+ * @param {Array} alphasArray 
+ * @param {Array} betasArray 
+ * @param {Array} bookTypes 
+ * @returns {Array} plotdata
+ */
 const processPlot = (alphasArray, betasArray, bookTypes) => {
   const x = tf.linspace(0, 1, 100).dataSync();
   const colors = { 0: "red", 1: "green", 2: "blue" };
@@ -24,23 +34,41 @@ const processPlot = (alphasArray, betasArray, bookTypes) => {
   return plotdata;
 };
 
-// Arg max function
+
+/**
+ * Get maximum value
+ */
 const argMax = (d) =>
   Object.entries(d).filter(
     (el) => el[1] == Math.max(...Object.values(d))
   )[0][0];
 
-// update alphas and betas based on user action
-const banditThompson = (reward_vector, sample_vector, alphas, betas) => {
+
+/**
+ * Update alphas and betas
+ * @param {Tensor1D} rewards
+ * @param {Tensor1D} samples
+ * @param {Tensor1D} alphas 
+ * @param {Tensor1D} betas 
+ * @returns 
+ */
+const banditThompson = (rewards, samples, alphas, betas) => {
   const prev_alpha = alphas;
   const prev_beta = betas;
 
-  alphas = prev_alpha.add(reward_vector);
-  betas = prev_beta.add(sample_vector.sub(reward_vector));
+  alphas = prev_alpha.add(rewards);
+  betas = prev_beta.add(samples.sub(reward_vector));
   return [alphas, betas];
 };
 
-// find gradient
+/**
+ * Calculate gradients
+ * @param {Tensor1D} alphas 
+ * @param {Tensor1D} betas 
+ * @param {Tensor1D} n_alphas 
+ * @param {Tensor1D} n_betas 
+ * @returns 
+ */
 const calcGradient = (alphas, betas, n_alphas, n_betas) => {
   let d_alphas, d_betas;
   console.log(
@@ -54,5 +82,16 @@ const calcGradient = (alphas, betas, n_alphas, n_betas) => {
   d_betas = n_betas.sub(betas);
   return [d_alphas, d_betas];
 };
+
+/**
+ * Simulate user action
+ * @param {Array} preferences 
+ * @param {number} option_id 
+ * @returns 
+ */
+const simulate = (preferences, option_id) => {
+  let b = tfd.Bernoulli(preferences);
+  return b[option_id];
+}
 
 export { processPlot, argMax, banditThompson, calcGradient };

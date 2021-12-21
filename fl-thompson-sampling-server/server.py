@@ -7,6 +7,7 @@ PORT = 1234
 print("Started the server and its listening on port: " + str(PORT))
 
 dim = 3
+policy = [0.1, 0.5, 0.4]
 
 # global weights
 alphas = [1] * dim
@@ -17,7 +18,7 @@ worker_models = []
 
 
 async def echo(websocket, path):
-    global alphas, betas, worker_models, dim
+    global alphas, betas, worker_models, dim, policy
 
     print("A client just connected")
     async for message in websocket:
@@ -55,11 +56,15 @@ async def echo(websocket, path):
                 response = {"type": "avg", "message": "successfully updated"}
 
             return response
-
+        elif received_messages[0] == "connected":
+            response = {
+                "type": "init-params",
+                "params": {"al": alphas, "bt": betas, "dim": dim, "policy": policy},
+            }
         elif received_messages[0] == "get-params":
             response = {
                 "type": "params",
-                "params": {"al": alphas, "bt": betas, "dim": dim},
+                "params": {"al": alphas, "bt": betas},
             }
 
         await websocket.send(json.dumps(response))
