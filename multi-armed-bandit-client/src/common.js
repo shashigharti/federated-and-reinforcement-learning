@@ -40,4 +40,19 @@ const banditThompson = (reward_vector, sample_vector, alphas, betas) => {
   return [alphas, betas];
 };
 
-export { processPlot, argMax, banditThompson };
+// find gradient
+const calcGradient = (alphas, betas, n_alphas, n_betas) => {
+  let d_alphas, d_betas;
+  console.log(
+    "alphas, betas, nalphas, nbetas",
+    alphas,
+    betas,
+    n_alphas,
+    n_betas
+  );
+  d_alphas = n_alphas.sub(alphas);
+  d_betas = n_betas.sub(betas);
+  return [d_alphas, d_betas];
+};
+
+export { processPlot, argMax, banditThompson, calcGradient };

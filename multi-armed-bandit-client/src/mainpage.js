@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import * as tf from "@tensorflow/tfjs-core";
 const { jStat } = require("jstat");
 import Plot from "react-plotly.js";
-import { processPlot, argMax, banditThompson } from "./common";
+import { processPlot, argMax, banditThompson, calcGradient } from "./common";
 import { BOOKS, BOOK_TYPES } from "./data";
 
 const MainPage = () => {
@@ -38,7 +38,8 @@ const MainPage = () => {
       setSelectedOption(argMax(samplesFromBetaDist));
 
       // set the image src
-      setImageSrc(books[selectedOption][0]);
+      const random = Math.floor(Math.random() * books[selectedOption].length);
+      setImageSrc(books[selectedOption][random]);
     }
   };
 
@@ -86,26 +87,44 @@ const MainPage = () => {
       tf.tensor(alphasArray).dataSync(),
       tf.tensor(betasArray).dataSync()
     );
+
     alphas_betas = banditThompson(
       tf.tensor(rewardVector),
       tf.tensor(sampledVector),
       tf.tensor(alphasArray),
       tf.tensor(betasArray)
     );
+    let gradWeights = calcGradient(
+      tf.tensor(alphasArray),
+      tf.tensor(betasArray),
+      alphas_betas[0],
+      alphas_betas[1]
+    );
 
     setAlphasArray(alphas_betas[0].dataSync());
     setBetasArray(alphas_betas[1].dataSync());
-    console.log("new alphas and betas", alphasArray, betasArray);
+    console.log("new: alphas and betas", alphasArray, betasArray);
+    console.log(
+      "diff: alphas and betas",
+      gradWeights[0].dataSync(),
+      gradWeights[1].dataSync()
+    );
 
     // set plot data
-    setPlotData(processPlot(alphasArray, betasArray, bookTypes));
+    setPlotData(
+      processPlot(
+        alphas_betas[0].dataSync(),
+        alphas_betas[1].dataSync(),
+        bookTypes
+      )
+    );
 
     // send data to the server
     socket.send([
       "update",
       JSON.stringify({
-        alphas: alphas_betas[0], // 0 ->  alphas
-        betas: alphas_betas[1], // 1 -> betas
+        alphas: gradWeights[0].dataSync(), // 0 ->  alphas
+        betas: gradWeights[1].dataSync(), // 1 -> betas
       }),
     ]);
     selectSample();
