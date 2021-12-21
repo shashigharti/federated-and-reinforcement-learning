@@ -5,6 +5,7 @@ import Plot from "react-plotly.js";
 
 const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
+  const socket = new WebSocket(url);
 
   // features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
@@ -79,8 +80,7 @@ const MainPage = () => {
   }, [alphasArray, betasArray]);
 
   useEffect(() => {
-    // get alphas and betas from server
-    const socket = new WebSocket(url);
+    // get params from server
     socket.onopen = (message) => {
       console.log("[socket]Connecton Established");
       socket.send(["connection", "Connection Established"]);
@@ -158,8 +158,8 @@ const MainPage = () => {
     socket.send([
       "update",
       JSON.stringify({
-        alphas: alphas.dataSync(),
-        betas: betas.dataSync(),
+        alphas: alphas_betas[0], // 0 ->  alphas
+        betas: alphas_betas[1], //1 -> betas
       }),
     ]);
     selectSample();
