@@ -94,4 +94,70 @@ const simulate = (preferences, option_id) => {
   return b[option_id];
 }
 
-export { processPlot, argMax, banditThompson, calcGradient };
+
+const actionAndUpdate = (rewardVector, sampledVector, alphasArray, betasArray, reward, socket) => {
+  console.log("reward=>", reward); 
+
+  let alphas_betas;   
+  let rewardVector = [0, 0, 0];
+  let sampledVector = [0, 0, 0];
+
+  rewardVector[selectedOption] = reward; // reward
+    sampledVector[selectedOption] = 1;
+
+    console.log(
+      "updating alpha beta variables",
+      tf.tensor(alphasArray).dataSync(),
+      tf.tensor(betasArray).dataSync()
+    );
+
+    alphas_betas = banditThompson(
+      tf.tensor(rewardVector),
+      tf.tensor(sampledVector),
+      tf.tensor(alphasArray),
+      tf.tensor(betasArray)
+    );
+    let gradWeights = calcGradient(
+      tf.tensor(alphasArray),
+      tf.tensor(betasArray),
+      alphas_betas[0],
+      alphas_betas[1]
+    );
+
+    setAlphasArray(alphas_betas[0].dataSync());
+    setBetasArray(alphas_betas[1].dataSync());
+    console.log(
+      "new: alphas and betas",
+      alphas_betas[0].dataSync(),
+      alphas_betas[1].dataSync()
+    );
+
+    // set plot data
+    setPlotData(
+      processPlot(
+        alphas_betas[0].dataSync(),
+        alphas_betas[1].dataSync(),
+        bookTypes
+      )
+    );
+
+    // send data to the server
+    console.log("Sending new weights to the server");
+    console.log(
+      "diff: alphas and betas",
+      gradWeights[0].dataSync(),
+      gradWeights[1].dataSync()
+    );
+
+    socket.send([
+      "update",
+      JSON.stringify({
+        alphas: gradWeights[0].dataSync(), // 0 ->  alphas
+        betas: gradWeights[1].dataSync(), // 1 -> betas
+      }),
+    ]);
+
+    // get new values of params (alpha, beta)
+    socket.send(["get-params", ""]);
+}
+export { processPlot, argMax, banditThompson, calcGradient, actionAndUpdate };

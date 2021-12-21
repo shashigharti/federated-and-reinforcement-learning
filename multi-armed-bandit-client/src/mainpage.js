@@ -27,10 +27,13 @@ const MainPage = () => {
   const [imgSrc, setImageSrc] = useState("");
   const [books, setBooks] = useState(BOOKS);
 
-  // choose the best option(with highest reward probability) among other various options; random probability using beta distribution
+  /**
+   * choose the best option(with highest reward probability) among other various options; random probability using beta distribution
+   */
   const selectSample = () => {
     let samplesFromBetaDist = [];
-    // for each option...
+
+    // for each option find the probability using beta distribution
     for (let opt = 0; opt < alphasArray.length; opt++) {
       // Get a beta distribution between the alphas and betas
       samplesFromBetaDist[opt] = jStat.beta.sample(
@@ -46,6 +49,12 @@ const MainPage = () => {
       // set the image src
       const random = Math.floor(Math.random() * books[selectedOption].length);
       setImageSrc(books[selectedOption][random]);
+    }
+
+    // if simulation is true, simulate the user action
+    if (simulation) {
+      let reward = simulate(policy, 1);
+      actionAndUpdate(alphasArray, betasArray, reward, socket);
     }
   };
 
@@ -102,78 +111,15 @@ const MainPage = () => {
     };
   }, [options]);
 
-  // handle user action
+  /**
+   * Handle user action
+   * @param {number} reward
+   * @returns
+   */
   const handleClick = (reward) => () => {
-    console.log("reward=>", reward);
-    let alphas_betas;
-    let rewardVector = [0, 0, 0];
-    let sampledVector = [0, 0, 0];
-
-    rewardVector[selectedOption] = reward; // reward
-    sampledVector[selectedOption] = 1;
-
-    console.log(
-      "updating alpha beta variables",
-      tf.tensor(alphasArray).dataSync(),
-      tf.tensor(betasArray).dataSync()
-    );
-
-    alphas_betas = banditThompson(
-      tf.tensor(rewardVector),
-      tf.tensor(sampledVector),
-      tf.tensor(alphasArray),
-      tf.tensor(betasArray)
-    );
-    let gradWeights = calcGradient(
-      tf.tensor(alphasArray),
-      tf.tensor(betasArray),
-      alphas_betas[0],
-      alphas_betas[1]
-    );
-
-    setAlphasArray(alphas_betas[0].dataSync());
-    setBetasArray(alphas_betas[1].dataSync());
-    console.log(
-      "new: alphas and betas",
-      alphas_betas[0].dataSync(),
-      alphas_betas[1].dataSync()
-    );
-
-    // set plot data
-    setPlotData(
-      processPlot(
-        alphas_betas[0].dataSync(),
-        alphas_betas[1].dataSync(),
-        bookTypes
-      )
-    );
-
-    // send data to the server
-    console.log("Sending new weights to the server");
-    console.log(
-      "diff: alphas and betas",
-      gradWeights[0].dataSync(),
-      gradWeights[1].dataSync()
-    );
-
-    socket.send([
-      "update",
-      JSON.stringify({
-        alphas: gradWeights[0].dataSync(), // 0 ->  alphas
-        betas: gradWeights[1].dataSync(), // 1 -> betas
-      }),
-    ]);
-
-    // get new values of params (alpha, beta)
-    socket.send(["get-params", ""]);
-
-    // if simulation is true, simulate the user action
-    if (simulation) {
-      let rws = simulate(policy, 1);
-    }
-
-    selectSample();
+    actionAndUpdate(alphasArray, betasArray, reward, socket);
   };
+
   return (
     <>
       <div id='main'>
