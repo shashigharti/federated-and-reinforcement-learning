@@ -31,12 +31,12 @@ async def echo(websocket, path):
         if received_messages[0] == "update":
 
             weights = json.loads(received_messages[1])
-            w_alphas, w_betas, w_reward_vector, w_sample_vector = (
+            w_alphas, w_betas = (
                 list(weights["alphas"].values()),
                 list(weights["betas"].values()),
             )
 
-            worker_models.append([w_alphas, w_betas, w_reward_vector, w_sample_vector])
+            worker_models.append([w_alphas, w_betas])
             print("no. of elements in weights queue:", len(worker_models))
 
             response = {"type": "update", "message": "successfully updated"}
