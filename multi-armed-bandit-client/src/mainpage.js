@@ -9,7 +9,7 @@ const MainPage = () => {
   const dim = 3;
   const stopAfter = 100;
   let [simulation, setSimulation] = useState(true);
-  let socket = new WebSocket(url);
+  let [socket, setSocket] = useState(null);
 
   // features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
@@ -18,6 +18,7 @@ const MainPage = () => {
 
   // user options : 3 types of books
   const [currentcycle, setCurrentcycle] = useState(0);
+  const [endCycle, setEndCycle] = useState(false);
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
@@ -54,6 +55,17 @@ const MainPage = () => {
     if (simulation) {
       let reward = simulate(policy, 1);
 
+      // let params = actionAndUpdate(
+      //   alphasArray,
+      //   betasArray,
+      //   selectedOption,
+      //   reward
+      // );
+
+      // let gradWeights, alphas_betas;
+      // gradWeights = params[0];
+      // alphas_betas = params[1];
+
       // after simulation code will be added here
     }
   };
@@ -64,13 +76,24 @@ const MainPage = () => {
 
   // Take initial action on params receive from the server
   useEffect(() => {
-    if (alphasArray.length == betasArray.length) {
+    console.log("Updated Alphas and Betas =>", alphasArray, betasArray);
+    if (
+      (alphasArray.length == betasArray.length && currentcycle == 0) ||
+      endCycle
+    ) {
       selectSample();
+      setEndCycle(false);
     }
   }, [alphasArray, betasArray]);
 
   useEffect(() => {
     if (options == 0) return;
+    setSocket(new WebSocket(url));
+  }, [options]);
+
+  useEffect(() => {
+    if (socket == null) return;
+
     // get params from server
     socket.onopen = (message) => {
       console.log("[socket]Connecton Established");
@@ -81,7 +104,6 @@ const MainPage = () => {
     socket.onmessage = (event) => {
       const message_from_server = JSON.parse(event.data);
       let dim_from_server = null;
-      console.log("[Server]Message from Server");
 
       // sets params with the value received from the server
       if (message_from_server["type"] == "init-params") {
@@ -106,31 +128,22 @@ const MainPage = () => {
         } else {
           console.log("[Server]Dimension does not match. ");
         }
-      } else if (message_from_server["type"] == "params") {
-        alphasArray = message_from_server.params["al"];
-        betasArray = message_from_server.params["bt"];
-        console.log(
-          "[Server]Received updated aplhas betas",
-          alphasArray,
-          betasArray
-        );
       } else if (
         message_from_server["type"] == "avg" ||
         message_from_server["type"] == "update"
       ) {
+        console.log(
+          "[Server]Received updated aplhas betas",
+          message_from_server.params["al"],
+          message_from_server.params["bt"]
+        );
         setCurrentcycle(currentcycle + 1);
-        console.log("[Server]Params updated");
-
-        // setAlphasArray(alphas_betas[0].dataSync());
-        // setBetasArray(alphas_betas[1].dataSync());
-        // console.log(
-        //   "new: alphas and betas",
-        //   alphas_betas[0].dataSync(),
-        //   alphas_betas[1].dataSync()
-        // );
+        setEndCycle(true);
+        setAlphasArray(message_from_server.params["al"]);
+        setBetasArray(message_from_server.params["bt"]);
       }
     };
-  }, [options]);
+  }, [socket]);
 
   /**
    * Handle user action
