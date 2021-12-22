@@ -7,27 +7,29 @@ import { BOOKS, BOOK_TYPES } from "./data";
 const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
   const dim = 3;
-  const stopAfter = 100;
+  const stopAfter = 1000;
   let [simulation, setSimulation] = useState(true);
   let [socket, setSocket] = useState(null);
 
-  // features/parameters that determine the users action
+  // Features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
   let [betasArray, setBetasArray] = useState([]);
   let [policy, setPolicy] = useState([]);
+  let [reward, setReward] = useState([]);
 
-  // user options : 3 types of books
-  const [currentcycle, setCurrentcycle] = useState(0);
+  // User options : 3 types of books
+  const [bookTypes, setBookTypes] = useState(BOOK_TYPES);
+
+  const [cycle, setCycle] = useState(0);
   const [endCycle, setEndCycle] = useState(false);
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
   const [plotdata, setPlotData] = useState([]);
-  const [bookTypes, setBookTypes] = useState(BOOK_TYPES);
   const [imgSrc, setImageSrc] = useState("");
   const [books, setBooks] = useState(BOOKS);
 
   /**
-   * choose the best option(with highest reward probability) among other various options;
+   * Choose the best option(with highest reward probability) among other various options;
    * random probability using beta distribution
    */
   const selectSample = () => {
@@ -43,30 +45,56 @@ const MainPage = () => {
     }
 
     if (samplesFromBetaDist.length > 0) {
-      // random selection of image to display
+      // Random selection of image to display
       setSelectedOption(argMax(samplesFromBetaDist));
 
-      // set the image src
+      // Choose a random image among options
       const random = Math.floor(Math.random() * books[selectedOption].length);
       setImageSrc(books[selectedOption][random]);
     }
 
-    // if simulation is true, simulate the user action
-    if (simulation) {
-      let reward = simulate(policy, 1);
+    // If simulation is true, simulate the user action
+    if (simulation && cycle <= stopAfter) {
+      let new_reward = simulate(policy, selectedOption);
+      setReward(reward + new_reward);
 
-      // let params = actionAndUpdate(
-      //   alphasArray,
-      //   betasArray,
-      //   selectedOption,
-      //   reward
-      // );
+      let params = actionAndUpdate(
+        alphasArray,
+        betasArray,
+        selectedOption,
+        new_reward
+      );
 
-      // let gradWeights, alphas_betas;
-      // gradWeights = params[0];
-      // alphas_betas = params[1];
+      if (params) {
+        let gradWeights, alphas_betas;
+        gradWeights = params[0];
+        alphas_betas = params[1];
 
-      // after simulation code will be added here
+        // Set plot data to display graphs
+        setPlotData(
+          processPlot(
+            alphas_betas[0].dataSync(),
+            alphas_betas[1].dataSync(),
+            bookTypes
+          )
+        );
+
+        console.log(
+          "diff: alphas and betas",
+          gradWeights[0].dataSync(),
+          gradWeights[1].dataSync()
+        );
+
+        // Send data to the server
+        console.log("Sending new weights to the server");
+        socket.send([
+          "update",
+          JSON.stringify({
+            alphas: gradWeights[0].dataSync(), // 0 ->  alphas
+            betas: gradWeights[1].dataSync(), // 1 -> betas
+          }),
+        ]);
+      }
     }
   };
 
@@ -74,15 +102,15 @@ const MainPage = () => {
     setOptions(Object.keys(books).length);
   }, []);
 
+  useEffect(() => {
+    setCycle(cycle + 1);
+  }, [endCycle]);
+
   // Take initial action on params receive from the server
   useEffect(() => {
-    console.log("Updated Alphas and Betas =>", alphasArray, betasArray);
-    if (
-      (alphasArray.length == betasArray.length && currentcycle == 0) ||
-      endCycle
-    ) {
-      selectSample();
+    if ((alphasArray.length == betasArray.length && cycle == 1) || endCycle) {
       setEndCycle(false);
+      selectSample();
     }
   }, [alphasArray, betasArray]);
 
@@ -94,37 +122,44 @@ const MainPage = () => {
   useEffect(() => {
     if (socket == null) return;
 
-    // get params from server
+    // Get params from server
     socket.onopen = (message) => {
       console.log("[socket]Connecton Established");
       socket.send(["connected", "Connection Established"]);
     };
 
-    // handle message received from server
+    // Handle message received from server
     socket.onmessage = (event) => {
       const message_from_server = JSON.parse(event.data);
       let dim_from_server = null;
 
-      // sets params with the value received from the server
+      // Sets params with the value received from the server
       if (message_from_server["type"] == "init-params") {
-        alphasArray = message_from_server.params["al"];
-        betasArray = message_from_server.params["bt"];
         dim_from_server = message_from_server.params["dim"];
-        policy = message_from_server.params["policy"];
-        console.log(
-          "[Server]INIT - Received aplhas betas dim policy",
-          alphasArray,
-          betasArray,
-          dim_from_server,
-          policy
-        );
 
-        // set the values
+        // Set the values
         if (dim_from_server == dim) {
-          setAlphasArray(alphasArray);
-          setBetasArray(betasArray);
-          setPolicy(policy);
           console.log("[Server]Valid dimension");
+          setAlphasArray(message_from_server.params["al"]);
+          setBetasArray(message_from_server.params["bt"]);
+          // setPolicy(policy); // commenting this part; the policy is received from the server.
+
+          console.log(
+            "[Server]INIT - Received aplhas betas dim policy",
+            setAlphasArray(message_from_server.params["al"]),
+            setAlphasArray(message_from_server.params["bt"]),
+            dim_from_server,
+            message_from_server.params["policy"]
+          );
+
+          // Policy is set locally now
+          let local_policy = Array.from({ length: 3 }, () =>
+            Math.min(Math.abs(Math.random() - Math.random() / 10), 0.77)
+          );
+
+          // Set the spiritual book selection probability to the highest
+          local_policy[0] = 0.8;
+          setPolicy(local_policy);
         } else {
           console.log("[Server]Dimension does not match. ");
         }
@@ -137,7 +172,6 @@ const MainPage = () => {
           message_from_server.params["al"],
           message_from_server.params["bt"]
         );
-        setCurrentcycle(currentcycle + 1);
         setEndCycle(true);
         setAlphasArray(message_from_server.params["al"]);
         setBetasArray(message_from_server.params["bt"]);
@@ -150,19 +184,22 @@ const MainPage = () => {
    * @param {number} reward
    * @returns
    */
-  const handleClick = (socket, reward) => () => {
+  const handleClick = (socket, new_reward) => () => {
+    setCycle(cycle + 1);
     let params = actionAndUpdate(
       alphasArray,
       betasArray,
       selectedOption,
-      reward
+      new_reward
     );
+
+    setReward(reward + new_reward);
 
     let gradWeights, alphas_betas;
     gradWeights = params[0];
     alphas_betas = params[1];
 
-    // set plot data
+    // Set plot data
     setPlotData(
       processPlot(
         alphas_betas[0].dataSync(),
@@ -177,7 +214,7 @@ const MainPage = () => {
       gradWeights[1].dataSync()
     );
 
-    // send data to the server
+    // Send data to the server
     console.log("Sending new weights to the server");
     socket.send([
       "update",
@@ -194,9 +231,16 @@ const MainPage = () => {
         <div className='row'>
           <div className='col s8'>
             <h3>Federated Learning (Thompson Sampling - Book Sale)</h3>
-            <div>Alphas: {alphasArray.toString()}</div>
-            <div>Betas: {betasArray.toString()}</div>
-            <div>Dimension: {dim}</div>
+            <div>
+              Alphas: {alphasArray.toString()} | Betas: {betasArray.toString()}
+            </div>
+            <div>
+              Dimension: {dim} | Cycle: {cycle}
+            </div>
+            <div>
+              Policy: {policy.toString()} | Selected Book Type:{" "}
+              {bookTypes[selectedOption]}
+            </div>
             <div>
               <Plot data={plotdata} layout={{ title: "Distribution Plot" }} />
             </div>

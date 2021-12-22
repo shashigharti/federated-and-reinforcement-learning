@@ -1,6 +1,18 @@
 const { jStat } = require("jstat");
 import * as tf from "@tensorflow/tfjs-core";
 
+const binomial_sample = (accept_rate) => (Math.random() < accept_rate ? 1 : 0);
+class Simulator {
+  constructor(rates) {
+    this.rates = rates;
+    this.action_space = Array(rates.length);
+  }
+  simulate(idx) {
+    let choice = binomial_sample(this.rates[idx]);
+    return choice;
+  }
+}
+
 /**
  * Process plot data
  * @param {Array} alphasArray
@@ -77,17 +89,29 @@ const calcGradient = (alphas, betas, n_alphas, n_betas) => {
  * @param {number} option_id
  * @returns
  */
-const simulate = (preferences, option_id) => {
-  // let b = tfd.Bernoulli(preferences);
-  // return b[option_id];
-  if (option_id == 0) return 1;
-  return 0;
+const simulate = (simulated_rates, selectedOption) => {
+  const env = new Simulator(simulated_rates);
+  return env.simulate(selectedOption);
 };
 
 const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
   let alphas_betas;
   let rewardVector = [0, 0, 0];
   let sampledVector = [0, 0, 0];
+  console.log(
+    "action and update",
+    alphasArray,
+    betasArray,
+    selectedOption,
+    reward
+  );
+
+  if (
+    alphasArray.length == 0 ||
+    betasArray.length == 0 ||
+    betasArray.length != alphasArray.length
+  )
+    return false;
 
   rewardVector[selectedOption] = reward; // reward
   sampledVector[selectedOption] = 1;
