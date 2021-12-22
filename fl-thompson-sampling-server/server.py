@@ -63,12 +63,12 @@ async def echo(websocket, path):
                 "type": "init-params",
                 "params": {"al": alphas, "bt": betas, "dim": dim, "policy": policy},
             }
-        elif received_messages[0] == "get-params":
-            print("[action]Get params")
-            response = {
-                "type": "params",
-                "params": {"al": alphas, "bt": betas},
-            }
+        # elif received_messages[0] == "get-params":
+        #     print("[action]Get params")
+        #     response = {
+        #         "type": "params",
+        #         "params": {"al": alphas, "bt": betas},
+        #     }
         await websocket.send(json.dumps(response))
 
 
