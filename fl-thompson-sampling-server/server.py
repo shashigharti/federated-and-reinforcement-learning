@@ -7,7 +7,7 @@ PORT = 1234
 print("Started the server and its listening on port: " + str(PORT))
 
 dim = 3
-policy = [0.1, 0.5, 0.4]
+policy = [0.8, 0.1, 0.1]
 
 # global weights
 alphas = [1] * dim
@@ -19,17 +19,13 @@ worker_models = []
 
 async def echo(websocket, path):
     global alphas, betas, worker_models, dim, policy
-
-    print("A client just connected")
     async for message in websocket:
         print("Received  message from client: " + message, type(message))
 
         received_messages = message.split(",", 1)
-        print("action", received_messages[0])
-
         response = {}
         if received_messages[0] == "update":
-
+            print("[action]Updating Params")
             weights = json.loads(received_messages[1])
             w_alphas, w_betas = (
                 list(weights["alphas"].values()),
@@ -37,36 +33,42 @@ async def echo(websocket, path):
             )
 
             worker_models.append([w_alphas, w_betas])
-            print("no. of elements in weights queue:", len(worker_models))
-
-            response = {"type": "update", "message": "successfully updated"}
+            print("No. of elements in weights queue:", len(worker_models))
+            response = {"type": "update", "params": {"al": alphas, "bt": betas}}
 
             # Average weights if we have weights from more than 1 worker
             if len(worker_models) > 1:
+                avg_alphas = [0] * dim
+                avg_betas = [0] * dim
+                print("Workers Weights(Gradients):", worker_models)
                 for worker in worker_models:
-                    alphas = [x + y for (x, y) in zip(alphas, worker[0])]
-                    betas = [x + y for (x, y) in zip(betas, worker[1])]
+                    avg_alphas = [x + y for (x, y) in zip(avg_alphas, worker[0])]
+                    avg_betas = [x + y for (x, y) in zip(avg_betas, worker[1])]
 
-                alphas = [elem / len(worker_models) for elem in alphas]
-                betas = [elem / len(worker_models) for elem in betas]
+                avg_alphas = [elem / len(worker_models) for elem in avg_alphas]
+                avg_betas = [elem / len(worker_models) for elem in avg_betas]
+
+                # update values
+                alphas = [a + avg_a for (a, avg_a) in zip(alphas, avg_alphas)]
+                betas = [b + avg_b for (b, avg_b) in zip(betas, avg_betas)]
+
                 print("Updated", alphas, betas)
 
                 # reset the weights queues
                 worker_models = []
-                response = {"type": "avg", "message": "successfully updated"}
-
-            return response
+                response = {"type": "avg", "params": {"al": alphas, "bt": betas}}
         elif received_messages[0] == "connected":
+            print("[action]Connected")
             response = {
                 "type": "init-params",
                 "params": {"al": alphas, "bt": betas, "dim": dim, "policy": policy},
             }
         elif received_messages[0] == "get-params":
+            print("[action]Get params")
             response = {
                 "type": "params",
                 "params": {"al": alphas, "bt": betas},
             }
-
         await websocket.send(json.dumps(response))
 
 

@@ -66,13 +66,6 @@ const banditThompson = (rewards, samples, alphas, betas) => {
  */
 const calcGradient = (alphas, betas, n_alphas, n_betas) => {
   let d_alphas, d_betas;
-  console.log(
-    "alphas, betas, nalphas, nbetas",
-    alphas,
-    betas,
-    n_alphas,
-    n_betas
-  );
   d_alphas = n_alphas.sub(alphas);
   d_betas = n_betas.sub(betas);
   return [d_alphas, d_betas];
@@ -91,27 +84,13 @@ const simulate = (preferences, option_id) => {
   return 0;
 };
 
-const actionAndUpdate = (
-  alphasArray,
-  betasArray,
-  selectedOption,
-  reward,
-  socket
-) => {
-  console.log("reward=>", reward);
-
+const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
   let alphas_betas;
   let rewardVector = [0, 0, 0];
   let sampledVector = [0, 0, 0];
 
   rewardVector[selectedOption] = reward; // reward
   sampledVector[selectedOption] = 1;
-
-  console.log(
-    "updating alpha beta variables",
-    tf.tensor(alphasArray).dataSync(),
-    tf.tensor(betasArray).dataSync()
-  );
 
   alphas_betas = banditThompson(
     tf.tensor(rewardVector),
@@ -127,9 +106,6 @@ const actionAndUpdate = (
   );
 
   return [gradWeights, alphas_betas];
-
-  // // get new values of params (alpha, beta)
-  // socket.send(["get-params", ""]);
 };
 
 export {

@@ -6,10 +6,10 @@ import { BOOKS, BOOK_TYPES } from "./data";
 
 const MainPage = () => {
   const url = "ws://127.0.0.1:1234";
-  const socket = new WebSocket(url);
   const dim = 3;
   const stopAfter = 100;
   let [simulation, setSimulation] = useState(true);
+  let socket = new WebSocket(url);
 
   // features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
@@ -70,6 +70,7 @@ const MainPage = () => {
   }, [alphasArray, betasArray]);
 
   useEffect(() => {
+    if (options == 0) return;
     // get params from server
     socket.onopen = (message) => {
       console.log("[socket]Connecton Established");
@@ -80,6 +81,7 @@ const MainPage = () => {
     socket.onmessage = (event) => {
       const message_from_server = JSON.parse(event.data);
       let dim_from_server = null;
+      console.log("[Server]Message from Server");
 
       // sets params with the value received from the server
       if (message_from_server["type"] == "init-params") {
@@ -88,7 +90,7 @@ const MainPage = () => {
         dim_from_server = message_from_server.params["dim"];
         policy = message_from_server.params["policy"];
         console.log(
-          "Received aplhas betas dim policy",
+          "[Server]INIT - Received aplhas betas dim policy",
           alphasArray,
           betasArray,
           dim_from_server,
@@ -100,18 +102,32 @@ const MainPage = () => {
           setAlphasArray(alphasArray);
           setBetasArray(betasArray);
           setPolicy(policy);
+          console.log("[Server]Valid dimension");
         } else {
-          console.log("Dimension size does not match. ");
+          console.log("[Server]Dimension does not match. ");
         }
       } else if (message_from_server["type"] == "params") {
         alphasArray = message_from_server.params["al"];
         betasArray = message_from_server.params["bt"];
-        console.log("Received updated aplhas betas", alphasArray, betasArray);
+        console.log(
+          "[Server]Received updated aplhas betas",
+          alphasArray,
+          betasArray
+        );
       } else if (
         message_from_server["type"] == "avg" ||
         message_from_server["type"] == "update"
       ) {
         setCurrentcycle(currentcycle + 1);
+        console.log("[Server]Params updated");
+
+        // setAlphasArray(alphas_betas[0].dataSync());
+        // setBetasArray(alphas_betas[1].dataSync());
+        // console.log(
+        //   "new: alphas and betas",
+        //   alphas_betas[0].dataSync(),
+        //   alphas_betas[1].dataSync()
+        // );
       }
     };
   }, [options]);
@@ -121,7 +137,7 @@ const MainPage = () => {
    * @param {number} reward
    * @returns
    */
-  const handleClick = (reward) => () => {
+  const handleClick = (socket, reward) => () => {
     let params = actionAndUpdate(
       alphasArray,
       betasArray,
@@ -133,14 +149,6 @@ const MainPage = () => {
     gradWeights = params[0];
     alphas_betas = params[1];
 
-    setAlphasArray(alphas_betas[0].dataSync());
-    setBetasArray(alphas_betas[1].dataSync());
-    console.log(
-      "new: alphas and betas",
-      alphas_betas[0].dataSync(),
-      alphas_betas[1].dataSync()
-    );
-
     // set plot data
     setPlotData(
       processPlot(
@@ -150,14 +158,14 @@ const MainPage = () => {
       )
     );
 
-    // send data to the server
-    console.log("Sending new weights to the server");
     console.log(
       "diff: alphas and betas",
       gradWeights[0].dataSync(),
       gradWeights[1].dataSync()
     );
 
+    // send data to the server
+    console.log("Sending new weights to the server");
     socket.send([
       "update",
       JSON.stringify({
@@ -181,17 +189,17 @@ const MainPage = () => {
             </div>
           </div>
           <div className='col s4'>
-            <img src={imgSrc} alt='Physics Book' width='600px' height='600px' />
+            <img src={imgSrc} width='600px' height='600px' />
             <div className='center-align col s12'>
               <a
                 className='waves-effect waves-light btn'
-                onClick={handleClick(1)}
+                onClick={handleClick(socket, 1)}
               >
                 View
               </a>
               <a
                 className='waves-effect waves-light btn'
-                onClick={handleClick(0)}
+                onClick={handleClick(socket, 0)}
               >
                 Next
               </a>
