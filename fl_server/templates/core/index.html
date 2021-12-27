@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col s12 m7">
+      <h1>Models</h1>
+      {% if access_records %}
+        <table>
+          <thead>
+            <th> Group </th>
+            <th> Alphas </th>
+            <th> Betas </th>
+            <th> Status </th>
+            <th> Dimension </th>
+            <th> Max workers</th>
+            <th> Updated </th>
+          </thead>
+          {% for grp in access_records%}
+            <tr>
+              <td>{{ grp.group_name}}</td>
+              <td>{{ grp.alpha}}</td>
+              <td>{{ grp.beta}}</td>
+              <td>{{ grp.status}}</td>
+              <td>{{ grp.dim}}</td>
+              <td>{{ grp.max_workers}}</td>
+              <td>{{ grp.updated_at}}</td>
+            </tr>    
+          {% endfor %}
+        </table>
+      {% else %}
+        <p> No records found</p>
+      {% endif %}      
+    </div>
+    <div class="col s12 m5">
+      <h1>Plot</h1>
+      ddddddddddddddddddddd
+    </div>  
+  </div>  
+</div>
+{% endblock content %}
