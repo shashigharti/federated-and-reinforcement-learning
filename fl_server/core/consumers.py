@@ -13,66 +13,113 @@ get_model = sync_to_async(_get_model, thread_sensitive=True)
 
 
 class FlConsumer(AsyncJsonWebsocketConsumer):
-    worker_models = {}
     weights = {}
     cycle = 0
+    clients = {}
+    mode = "registration"  # registration|training|avg
+    isCycleEnd = False
 
     async def connect(self):
         self.room_name = "group_1"
         self.room_group_name = "group_1"
 
-        print("[Socket]connected", self.room_name)
+        print("\n\n[Socket] NEW CONNECTIONS", self.room_name)
         print("[Socket] init params")
+
         model_obj = await get_model(self.room_group_name)
         alphas = [int(x) for x in getattr(model_obj, "alpha").split(",")]
         betas = [int(x) for x in getattr(model_obj, "beta").split(",")]
         dim = getattr(model_obj, "dim")
-        max_worker = getattr(model_obj, "max_workers")
+        max_workers = getattr(model_obj, "max_workers")
 
         if self.room_group_name not in self.weights:
             self.weights[self.room_group_name] = {
                 "alphas": alphas,
                 "betas": betas,
                 "dim": dim,
-                "max_worker": max_worker,
+                "max_workers": max_workers,
             }
-            self.worker_models[self.room_group_name] = []
+            self.clients[self.room_group_name] = {"ids": [], "weights": {}}
+
+        print(
+            "[Socket] Model Details:{}".format(
+                {
+                    "alphas": alphas,
+                    "betas": betas,
+                    "dim": dim,
+                    "max_workers": max_workers,
+                }
+            )
+        )
 
         # Join room group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-
-    async def disconnect(self, close_code):
-        print("Disconnected")
-        # Leave room group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
         """
         Receive message from WebSocket.
         Get the event and send the appropriate response
         """
-        print("\n\n[Socket] Data received:{}".format(text_data))
-
-        response_to_user = {}
+        response_to_user = ""
         response_from_user = json.loads(text_data)
         event = response_from_user.get("event", None)
+        client_id = response_from_user.get("client_id", None)
 
+        print("[Socket] Data received:{}".format(text_data))
         if event == "connected":
-            print("weights", self.weights)
-            response_to_user = {
-                "type": "send_message",
-                "message": {
-                    "type": "init-params",
-                    "params": {
-                        "al": self.weights[self.room_group_name]["alphas"],
-                        "bt": self.weights[self.room_group_name]["betas"],
-                        "dim": self.weights[self.room_group_name]["dim"],
-                    },
-                },
-            }
+            if self.mode == "training":
+                print("[Socket] Training Mode, No more registration")
+
+            elif self.mode == "registration":
+                if (
+                    len(self.clients[self.room_group_name]["ids"])
+                    < self.weights[self.room_group_name]["max_workers"]
+                ):
+                    # Register the connected clients
+                    print("[Socket] Registration Mode ")
+                    if client_id not in self.clients[self.room_group_name]["ids"]:
+                        self.clients[self.room_group_name]["ids"].append(client_id)
+
+                    print(
+                        "[Socket] No. of Clients Registered:{} Clients:{}".format(
+                            len(self.clients[self.room_group_name]["ids"]),
+                            self.clients[self.room_group_name]["ids"],
+                        )
+                    )
+
+                    if (
+                        len(self.clients[self.room_group_name]["ids"])
+                        == self.weights[self.room_group_name]["max_workers"]
+                    ):
+                        self.mode = "training"
+                        response_to_user = {
+                            "type": "send_message",
+                            "message": {
+                                "type": "init-params",
+                                "params": {
+                                    "al": self.weights[self.room_group_name]["alphas"],
+                                    "bt": self.weights[self.room_group_name]["betas"],
+                                    "dim": self.weights[self.room_group_name]["dim"],
+                                    "cycle": self.cycle,
+                                },
+                            },
+                        }
+                        print(
+                            "\n\n\n[Socket] ============== Training Mode Started ================== "
+                        )
+                    else:
+                        print(
+                            "[Socket] Waiting for {} more client/s".format(
+                                self.weights[self.room_group_name]["max_workers"]
+                                - len(self.clients[self.room_group_name]["ids"])
+                            )
+                        )
+
         elif event == "update":
-            print("[Socket] Updating Params")
+            print("[Socket] Data received: {}".format(text_data))
+            print("[Socket] Got weights from client: {}".format(client_id))
+
             w_alphas = response_from_user.get("alphas", None)
             w_betas = response_from_user.get("betas", None)
 
@@ -80,45 +127,45 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                 list(w_alphas.values()),
                 list(w_betas.values()),
             )
-            self.worker_models[self.room_group_name].append([w_alphas, w_betas])
+
+            # update client weights
+            self.clients[self.room_group_name]["weights"][client_id] = [
+                w_alphas,
+                w_betas,
+            ]
+
             print(
-                "No. of elements in weights queue:",
-                len(self.worker_models[self.room_group_name]),
+                "[Socket] No. of weights received:",
+                len(self.clients[self.room_group_name]["weights"]),
             )
 
-            response_to_user = {
-                "type": "send_message",
-                "message": {
-                    "type": "update",
-                    "params": {
-                        "al": self.weights[self.room_group_name]["alphas"],
-                        "bt": self.weights[self.room_group_name]["betas"],
-                    },
-                },
-            }
-
-            # Average weights if we have weights from more than 1 worker
+            # Check if we received weights from all clients that were registered
             if (
-                len(self.worker_models[self.room_group_name])
-                >= self.weights[self.room_group_name]["max_worker"]
+                len(self.clients[self.room_group_name]["weights"])
+                >= self.weights[self.room_group_name]["max_workers"]
             ):
+                self.mode == "avg"
+
+                print("\n[Socket] **** Averaging Weights ****".format(self.cycle))
+                print(
+                    "[Socket] Workers Weights(Gradients):",
+                    self.clients[self.room_group_name]["weights"],
+                )
+
+                # Average weights
                 avg_alphas = [0] * self.weights[self.room_group_name]["dim"]
                 avg_betas = [0] * self.weights[self.room_group_name]["dim"]
 
-                print(
-                    "[Socket] Workers Weights(Gradients):",
-                    self.worker_models[self.room_group_name],
-                )
-                for worker in self.worker_models[self.room_group_name]:
+                for worker in self.clients[self.room_group_name]["weights"].values():
                     avg_alphas = [x + y for (x, y) in zip(avg_alphas, worker[0])]
                     avg_betas = [x + y for (x, y) in zip(avg_betas, worker[1])]
 
                 avg_alphas = [
-                    elem / len(self.worker_models[self.room_group_name])
+                    elem / len(self.clients[self.room_group_name]["weights"])
                     for elem in avg_alphas
                 ]
                 avg_betas = [
-                    elem / len(self.worker_models[self.room_group_name])
+                    elem / len(self.clients[self.room_group_name]["weights"])
                     for elem in avg_betas
                 ]
 
@@ -135,15 +182,17 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         self.weights[self.room_group_name]["betas"], avg_betas
                     )
                 ]
+                print("[Socket] Updated New Weights", self.weights)
 
-                print("[Socket] Updated", self.weights)
+                # Reset the queues
+                self.clients[self.room_group_name]["weights"] = {}
+                self.clients[self.room_group_name]["ids"] = []
+                self.isCycleEnd = True
 
-                # reset the weights queues
-                self.worker_models[self.room_group_name] = []
                 response_to_user = {
                     "type": "send_message",
                     "message": {
-                        "type": "avg",
+                        "type": "new_weights",
                         "params": {
                             "al": self.weights[self.room_group_name]["alphas"],
                             "bt": self.weights[self.room_group_name]["betas"],
@@ -151,17 +200,31 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         },
                     },
                 }
-                self.cycle += 1
-                print("End cycle:{}", self.cycle)
-                # response = {"type": "avg", "params": {"al": alphas, "bt": betas}}
 
-        print("[Socket] Sending data:{}", response_to_user)
+            else:
+                self.isCycleEnd = False
 
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            response_to_user,
-        )
+        if response_to_user != "":
+            print("[Socket] Sending data:{}".format(response_to_user))
+
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                response_to_user,
+            )
+            if self.isCycleEnd:
+                print("Cycle {} - End of cycle".format(self.cycle))
+                self.cycle = self.cycle + 1
+            print(
+                "\n\n[Socket] ************** Cycle: {}  **************".format(
+                    self.cycle
+                )
+            )
+
+    async def disconnect(self, close_code):
+        print("Disconnected")
+        # Leave room group
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def send_message(self, res):
         """Receive message from room group"""
