@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
-from core.models import ServerData, TrainingCycle
+from core.models import ServerData
 from asgiref.sync import sync_to_async
 
 

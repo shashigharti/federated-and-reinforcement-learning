@@ -1,4 +1,4 @@
-from core.models import ServerData, TrainingCycle
+from core.models import ServerData, GlobalTrainingCycle
 
 from django.http import HttpResponse, JsonResponse
 from django.core.serializers import serialize
