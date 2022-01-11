@@ -7,21 +7,21 @@
       {% if access_records %}
         <table>
           <thead>
-            <th> Group </th>
+            <th> Group(model_id) </th>
             <th> Alphas </th>
             <th> Betas </th>
             <th> Status </th>
-            <th> Dimension </th>
+            <th> Dimension/Options </th>
             <th> Max workers</th>
             <th> Updated </th>
           </thead>
           {% for grp in access_records%}
             <tr>
-              <td>{{ grp.group_name}}</td>
-              <td>{{ grp.alpha}}</td>
-              <td>{{ grp.beta}}</td>
+              <td>{{ grp.model_id}}</td>
+              <td>{{ grp.alphas}}</td>
+              <td>{{ grp.betas}}</td>
               <td>{{ grp.status}}</td>
-              <td>{{ grp.dim}}</td>
+              <td>{{ grp.options}}</td>
               <td>{{ grp.max_workers}}</td>
               <td>{{ grp.updated_at}}</td>
             </tr>    

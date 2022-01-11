@@ -1,9 +1,8 @@
-from django.db import models
-from .server_data import ServerData
-from jsonfield import JSONField
+from rest_framework import serializers
+from core.models import GlobalTrainingCycle
 
 
-class GlobalTrainingCycle(models.Model):
+class TrainingCycleSerializer(serializers.ModelSerializer):
     server_id = models.ForeignKey(ServerData, on_delete=models.CASCADE)
     start_alphas = models.CharField(max_length=200, default="")
     start_betas = models.CharField(max_length=200, default="")
@@ -14,3 +13,13 @@ class GlobalTrainingCycle(models.Model):
     config = JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def create(self, validated_data):
+        return GlobalTrainingCycle.create(validated_data)
+
+    def update(self, instance, validated_data):
+        return GlobalTrainingCycle.create(validated_data)
+
+    class Meta:
+        model = GlobalTrainingCycle
+        fields = "__all__"

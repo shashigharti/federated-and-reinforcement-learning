@@ -1,15 +1,55 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
-from core.models import ServerData
+import asyncio
+from core.models import ServerData, GlobalTrainingCycle
 from asgiref.sync import sync_to_async
 
 
-def _get_model(group_name):
-    obj = ServerData.objects.filter(group_name=group_name).first()
+@sync_to_async(thread_sensitive=True)
+def get_model_detail(model_id):
+    obj = ServerData.objects.filter(model_id=model_id).first()
     return obj
 
 
-get_model = sync_to_async(_get_model, thread_sensitive=True)
+@sync_to_async(thread_sensitive=True)
+def get_cycle_detail(model_id):
+    training_details = (
+        GlobalTrainingCycle.objects.all()
+        .filter(server_id=model_id)
+        .order_by("-updated_at")
+    )
+    return training_details
+
+
+@sync_to_async(thread_sensitive=True)
+def create_server_record(data):
+    obj_training_cycle, created = GlobalTrainingCycle.objects.get_or_create(
+        server_id=data["server_id"],
+        start_alphas=data["start_alphas"],
+        start_betas=data["start_betas"],
+        end_alphas=data["end_alphas"],
+        end_betas=data["end_betas"],
+        cycle_status=data["cycle_status"],
+        n_worker_participated=data["n_worker_participated"],
+        config=data["config"],
+    )
+    print(
+        server_id=data["server_id"],
+        start_alphas=data["start_alphas"],
+        start_betas=data["start_betas"],
+        end_alphas=data["end_alphas"],
+        end_betas=data["end_betas"],
+        cycle_status=data["cycle_status"],
+        n_worker_participated=data["n_worker_participated"],
+        config=data["config"],
+    )
+
+    obj_training_cycle.save()
+    return obj_training_cycle, created
+
+
+# get_model_detail = sync_to_async(_get_model_detail, thread_sensitive=True)
+# get_cycle_detail = sync_to_async(_get_cycle_detail, thread_sensitive=True)
 
 
 class FlConsumer(AsyncJsonWebsocketConsumer):
@@ -20,16 +60,16 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
     isCycleEnd = False
 
     async def connect(self):
-        self.room_name = "group_1"
-        self.room_group_name = "group_1"
+        self.room_name = "room_1"
+        self.room_group_name = "room_1"
 
         print("\n\n[Socket] NEW CONNECTIONS", self.room_name)
         print("[Socket] init params")
 
-        model_obj = await get_model(self.room_group_name)
-        alphas = [int(x) for x in getattr(model_obj, "alpha").split(",")]
-        betas = [int(x) for x in getattr(model_obj, "beta").split(",")]
-        dim = getattr(model_obj, "dim")
+        model_obj = await get_model_detail(self.room_group_name)
+        alphas = [int(x) for x in getattr(model_obj, "alphas").split(",")]
+        betas = [int(x) for x in getattr(model_obj, "betas").split(",")]
+        dim = getattr(model_obj, "options")
         max_workers = getattr(model_obj, "max_workers")
 
         if self.room_group_name not in self.weights:
@@ -93,21 +133,35 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         == self.weights[self.room_group_name]["max_workers"]
                     ):
                         self.mode = "training"
-                        response_to_user = {
-                            "type": "send_message",
-                            "message": {
-                                "type": "init-params",
-                                "params": {
-                                    "al": self.weights[self.room_group_name]["alphas"],
-                                    "bt": self.weights[self.room_group_name]["betas"],
-                                    "dim": self.weights[self.room_group_name]["dim"],
-                                    "cycle": self.cycle,
-                                },
-                            },
-                        }
+                        # response_to_user = {
+                        #     "type": "send_message",
+                        #     "message": {
+                        #         "type": "init-params",
+                        #         "params": {
+                        #             "al": self.weights[self.room_group_name]["alphas"],
+                        #             "bt": self.weights[self.room_group_name]["betas"],
+                        #             "dim": self.weights[self.room_group_name]["dim"],
+                        #             "cycle": self.cycle,
+                        #         },
+                        #     },
+                        # }
                         print(
                             "\n\n\n[Socket] ============== Training Mode Started ================== "
                         )
+                        serverdata = await get_model_detail(self.room_group_name)
+                        data = {
+                            "server_id": getattr(serverdata, "id"),
+                            "start_alphas": getattr(serverdata, "alphas"),
+                            "start_betas": getattr(serverdata, "betas"),
+                            "end_alphas": "",
+                            "end_betas": "",
+                            "cycle_status": "training",
+                            "n_worker_participated": getattr(serverdata, "max_workers"),
+                            "config": {},
+                        }
+                        # Create training data
+                        data = create_server_record(data)
+                        print(data)
                     else:
                         print(
                             "[Socket] Waiting for {} more client/s".format(
