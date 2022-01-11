@@ -18,9 +18,9 @@ worker_models = []
 
 
 async def echo(websocket, path):
-    global alphas, betas, worker_models, dim, policy
+    global alphas, betas, worker_models, dim, policy, status
     async for message in websocket:
-        print("Received  message from client: " + message, type(message))
+        print("Received message from client: " + message, type(message))
 
         received_messages = message.split(",", 1)
         response = {}
