@@ -2,7 +2,7 @@
     {
       "model": "core.serverdata",
       "fields": {
-        "model_id": "room_1",
+        "model_name": "room_1",
         "alphas": "1,1,1",
         "betas": "1,1,1",    
         "options": 3,

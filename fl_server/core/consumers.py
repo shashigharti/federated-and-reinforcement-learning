@@ -9,16 +9,16 @@ import scipy.stats as ss
 
 
 @sync_to_async(thread_sensitive=True)
-def get_model_detail(model_id):
-    obj = ServerData.objects.filter(model_id=model_id).first()
+def get_model_detail(model_name):
+    obj = ServerData.objects.filter(model_name=model_name).first()
     return obj
 
 
 @sync_to_async(thread_sensitive=True)
-def get_cycle_detail(model_id):
+def get_cycle_detail(model_name):
     training_details = (
         GlobalTrainingCycle.objects.all()
-        .filter(server_id=model_id)
+        .filter(model_name=model_name)
         .order_by("-updated_at")
     )
     return training_details
@@ -26,7 +26,7 @@ def get_cycle_detail(model_id):
 
 @sync_to_async(thread_sensitive=True)
 def create_training(pdata):
-    r = requests.post("http://127.0.0.1:8000/api/trainings", json=pdata)
+    r = requests.post("http://127.0.0.1:8000/api/trainings/create", json=pdata)
     print(r.json())
 
 
@@ -127,9 +127,8 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                             "\n\n\n[Socket] ============== Training Mode Started ================== "
                         )
                         serverdata = await get_model_detail(self.room_group_name)
-                        print(serverdata)
                         pdata = {
-                            "server_id": getattr(serverdata, "id"),
+                            "server_data": getattr(serverdata, "id"),
                             "start_alphas": getattr(serverdata, "alphas"),
                             "start_betas": getattr(serverdata, "betas"),
                             "end_alphas": "0,0,0",

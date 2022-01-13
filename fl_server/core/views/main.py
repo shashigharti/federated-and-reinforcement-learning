@@ -1,8 +1,6 @@
-from django.http import HttpResponse
-from django.core.serializers import serialize
 from django.shortcuts import render
-from core.models import ServerData
-from core.serializers import GlobalTrainingCycleSerializer
+from core.models import ServerData, GlobalTrainingCycle
+from core.serializers import GlobalTrainingCycleSerializer, ServerDataSerializer
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
@@ -18,13 +16,68 @@ def index(request):
     return render(request, "core/index.html", context=data_dict)
 
 
-@api_view(["POST"])
+@api_view(
+    [
+        "GET",
+    ]
+)
+def model_list(request):
+    """
+    Display the index page
+    """
+    serverdata_list = ServerDataSerializer(
+        ServerData.objects.order_by("created_at"), many=True
+    )
+    return JsonResponse(serverdata_list.data, safe=False, status=201)
+
+
+@api_view(
+    [
+        "GET",
+    ]
+)
+def training_list(request, model_id):
+    """
+    Display the index page
+    """
+    globaltrainingcycle_list = GlobalTrainingCycleSerializer(
+        GlobalTrainingCycle.objects.filter(server_data_id=model_id).order_by(
+            "created_at"
+        ),
+        many=True,
+    )
+    return JsonResponse(globaltrainingcycle_list.data, safe=False, status=201)
+
+
+@api_view(
+    [
+        "POST",
+    ]
+)
 def training_create(request):
     """
     create the training record for a model"""
 
-    data = JSONParser().parse(request)
-    serializer = GlobalTrainingCycleSerializer(data=data)
+    serializer = GlobalTrainingCycleSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return JsonResponse(serializer.data, status=201)
+
+    return JsonResponse(serializer.errors, status=400)
+
+
+@api_view(
+    [
+        "PUT",
+    ]
+)
+def training_update(request, training_cycle_id):
+    """
+    update the params for the training cycle"""
+
+    server_data = GlobalTrainingCycle.objects.filter(id=training_cycle_id).first()
+    serializer = GlobalTrainingCycleSerializer(server_data, data=request.data)
 
     if serializer.is_valid():
         serializer.save()

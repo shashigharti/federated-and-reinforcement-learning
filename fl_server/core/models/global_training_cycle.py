@@ -4,7 +4,7 @@ from jsonfield import JSONField
 
 
 class GlobalTrainingCycle(models.Model):
-    server_id = models.ForeignKey(ServerData, on_delete=models.CASCADE)
+    server_data = models.ForeignKey(ServerData, on_delete=models.CASCADE)
     start_alphas = models.CharField(max_length=200, default="")
     start_betas = models.CharField(max_length=200, default="")
     end_alphas = models.CharField(max_length=200, default="")

@@ -7,7 +7,8 @@
       {% if access_records %}
         <table>
           <thead>
-            <th> Group(model_id) </th>
+            <th> id </th>
+            <th> Group(model_name) </th>
             <th> Alphas </th>
             <th> Betas </th>
             <th> Status </th>
@@ -15,15 +16,16 @@
             <th> Max workers</th>
             <th> Updated </th>
           </thead>
-          {% for grp in access_records%}
+          {% for grp in access_records %}
             <tr>
-              <td>{{ grp.model_id}}</td>
-              <td>{{ grp.alphas}}</td>
-              <td>{{ grp.betas}}</td>
-              <td>{{ grp.status}}</td>
-              <td>{{ grp.options}}</td>
-              <td>{{ grp.max_workers}}</td>
-              <td>{{ grp.updated_at}}</td>
+              <td>{{ grp.id }}</td>
+              <td>{{ grp.model_name }}</td>
+              <td>{{ grp.alphas }}</td>
+              <td>{{ grp.betas }}</td>
+              <td>{{ grp.status }}</td>
+              <td>{{ grp.options }}</td>
+              <td>{{ grp.max_workers }}</td>
+              <td>{{ grp.updated_at }}</td>
             </tr>    
           {% endfor %}
         </table>
@@ -31,10 +33,6 @@
         <p> No records found</p>
       {% endif %}      
     </div>
-    <div class="col s12 m5">
-      <h1>Plot</h1>
-      ddddddddddddddddddddd
-    </div>  
   </div>  
 </div>
 {% endblock content %}

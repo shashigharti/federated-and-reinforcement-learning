@@ -8,7 +8,7 @@ const MainPage = () => {
   // const url = "ws://127.0.0.1:1234";
   const url = "ws://127.0.0.1:8000/fl-server";
   const dim = 3;
-  const stopAfter = 1000;
+  const stopAfter = 10;
   const policies = [
     [0.7, 0.2, 0.1],
     [0.8, 0.15, 0.05],
