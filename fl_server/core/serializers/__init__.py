@@ -1,2 +1,2 @@
-from .server_data import *
-from .global_training_cycle import *
+from .server_data import ServerDataSerializer
+from .global_training_cycle import GlobalTrainingCycleSerializer

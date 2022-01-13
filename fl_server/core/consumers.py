@@ -1,8 +1,11 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
-import asyncio
 from core.models import ServerData, GlobalTrainingCycle
 from asgiref.sync import sync_to_async
+import requests
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.stats as ss
 
 
 @sync_to_async(thread_sensitive=True)
@@ -22,34 +25,9 @@ def get_cycle_detail(model_id):
 
 
 @sync_to_async(thread_sensitive=True)
-def create_server_record(data):
-    obj_training_cycle, created = GlobalTrainingCycle.objects.get_or_create(
-        server_id=data["server_id"],
-        start_alphas=data["start_alphas"],
-        start_betas=data["start_betas"],
-        end_alphas=data["end_alphas"],
-        end_betas=data["end_betas"],
-        cycle_status=data["cycle_status"],
-        n_worker_participated=data["n_worker_participated"],
-        config=data["config"],
-    )
-    print(
-        server_id=data["server_id"],
-        start_alphas=data["start_alphas"],
-        start_betas=data["start_betas"],
-        end_alphas=data["end_alphas"],
-        end_betas=data["end_betas"],
-        cycle_status=data["cycle_status"],
-        n_worker_participated=data["n_worker_participated"],
-        config=data["config"],
-    )
-
-    obj_training_cycle.save()
-    return obj_training_cycle, created
-
-
-# get_model_detail = sync_to_async(_get_model_detail, thread_sensitive=True)
-# get_cycle_detail = sync_to_async(_get_cycle_detail, thread_sensitive=True)
+def create_training(pdata):
+    r = requests.post("http://127.0.0.1:8000/api/trainings", json=pdata)
+    print(r.json())
 
 
 class FlConsumer(AsyncJsonWebsocketConsumer):
@@ -133,35 +111,37 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         == self.weights[self.room_group_name]["max_workers"]
                     ):
                         self.mode = "training"
-                        # response_to_user = {
-                        #     "type": "send_message",
-                        #     "message": {
-                        #         "type": "init-params",
-                        #         "params": {
-                        #             "al": self.weights[self.room_group_name]["alphas"],
-                        #             "bt": self.weights[self.room_group_name]["betas"],
-                        #             "dim": self.weights[self.room_group_name]["dim"],
-                        #             "cycle": self.cycle,
-                        #         },
-                        #     },
-                        # }
+                        response_to_user = {
+                            "type": "send_message",
+                            "message": {
+                                "type": "init-params",
+                                "params": {
+                                    "al": self.weights[self.room_group_name]["alphas"],
+                                    "bt": self.weights[self.room_group_name]["betas"],
+                                    "dim": self.weights[self.room_group_name]["dim"],
+                                    "cycle": self.cycle,
+                                },
+                            },
+                        }
                         print(
                             "\n\n\n[Socket] ============== Training Mode Started ================== "
                         )
                         serverdata = await get_model_detail(self.room_group_name)
-                        data = {
+                        print(serverdata)
+                        pdata = {
                             "server_id": getattr(serverdata, "id"),
                             "start_alphas": getattr(serverdata, "alphas"),
                             "start_betas": getattr(serverdata, "betas"),
-                            "end_alphas": "",
-                            "end_betas": "",
+                            "end_alphas": "0,0,0",
+                            "end_betas": "0,0,0",
                             "cycle_status": "training",
                             "n_worker_participated": getattr(serverdata, "max_workers"),
-                            "config": {},
+                            "config": "{}",
                         }
+
                         # Create training data
-                        data = create_server_record(data)
-                        print(data)
+                        data = await create_training(pdata)
+                        print("after create training")
                     else:
                         print(
                             "[Socket] Waiting for {} more client/s".format(
