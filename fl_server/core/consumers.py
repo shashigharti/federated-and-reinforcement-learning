@@ -1,4 +1,3 @@
-from contextlib import nullcontext
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
 from core.models import ServerData, GlobalTrainingCycle
@@ -7,11 +6,7 @@ import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as ss
-from core.serializers import (
-    GlobalTrainingCycleSerializer,
-    ServerDataSerializer,
-    TrainingCycleDetailsSerializer,
-)
+from core.serializers import GlobalTrainingCycleSerializer
 
 
 @sync_to_async(thread_sensitive=True)
@@ -40,6 +35,15 @@ def update_training(training_cycle_id, pdata):
     response = requests.put(
         "http://127.0.0.1:8000/api/trainings/update/{}/".format(training_cycle_id),
         json=pdata,
+    )
+    print(response.json())
+    return response.json()
+
+
+@sync_to_async(thread_sensitive=True)
+def create_training_cycle_details(pdata):
+    response = requests.post(
+        "http://127.0.0.1:8000/api/trainings/cycle_details/create", json=pdata
     )
     print(response.json())
     return response.json()
@@ -246,8 +250,6 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                 pdata = await get_training_detail(self.global_training_cycle_id)
                 if pdata != None:
                     globaltrainingcycle = GlobalTrainingCycleSerializer(pdata)
-
-                    print("before", pdata)
                     pdata = globaltrainingcycle.data
                     pdata["end_alphas"] = ",".join(
                         [str(al) for al in self.weights[self.room_group_name]["alphas"]]
@@ -256,10 +258,23 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         [str(al) for al in self.weights[self.room_group_name]["betas"]]
                     )
                     pdata["cycle_status"] = "inactive"
-                    print("after", pdata)
+                    pdata["rounds"] = self.cycle
 
                     # Update training data
                     await update_training(self.global_training_cycle_id, pdata)
+
+                    # Update training detail data
+                    await create_training_cycle_details(
+                        {
+                            "global_training_cycle": pdata["id"],
+                            "params": json.dumps(
+                                {
+                                    "alphas": pdata["end_alphas"],
+                                    "betas": pdata["end_betas"],
+                                }
+                            ),
+                        }
+                    )
 
                 response_to_user = {
                     "type": "send_message",

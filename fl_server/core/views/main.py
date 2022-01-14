@@ -1,6 +1,10 @@
 from django.shortcuts import render
-from core.models import ServerData, GlobalTrainingCycle
-from core.serializers import GlobalTrainingCycleSerializer, ServerDataSerializer
+from core.models import ServerData, GlobalTrainingCycle, TrainingCycleDetails
+from core.serializers import (
+    GlobalTrainingCycleSerializer,
+    ServerDataSerializer,
+    TrainingCycleDetailsSerializer,
+)
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
@@ -47,6 +51,41 @@ def training_list(request, model_id):
         many=True,
     )
     return JsonResponse(globaltrainingcycle_list.data, safe=False, status=201)
+
+
+@api_view(
+    [
+        "GET",
+    ]
+)
+def training_cycle_details_list(request, global_training_cycle_id):
+    """
+    Display the index page
+    """
+    trainingcycledetails_list = TrainingCycleDetailsSerializer(
+        TrainingCycleDetails.objects.filter(
+            global_training_cycle_id=global_training_cycle_id
+        ).order_by("created_at"),
+        many=True,
+    )
+    return JsonResponse(trainingcycledetails_list.data, safe=False, status=201)
+
+
+@api_view(
+    [
+        "POST",
+    ]
+)
+def training_cycle_details_create(request):
+    """
+    create the record for a training cycle"""
+    serializer = TrainingCycleDetailsSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return JsonResponse(serializer.data, status=201)
+
+    return JsonResponse(serializer.errors, status=400)
 
 
 @api_view(

@@ -5,10 +5,9 @@ import { argMax, processPlot, simulate, actionAndUpdate } from "./common";
 import { BOOKS, BOOK_TYPES } from "./data";
 
 const ClientPage = () => {
-  // const url = "ws://127.0.0.1:1234";
   const url = "ws://127.0.0.1:8000/fl-server";
   const dim = 3;
-  const stopAfter = 10;
+  const stopAfter = 400;
   const policies = [
     [0.7, 0.2, 0.1],
     [0.8, 0.15, 0.05],
@@ -119,6 +118,7 @@ const ClientPage = () => {
 
   useEffect(() => {
     setCycle(cycle + 1);
+    console.log(cycle);
   }, [endCycle]);
 
   // Take initial action on params receive from the server
@@ -207,7 +207,7 @@ const ClientPage = () => {
           message_from_server.params["bt"],
           message_from_server.params["cycle"]
         );
-
+        setCycle(message_from_server.params["cycle"]);
         setEndCycle(true);
         setAlphasArray(message_from_server.params["al"]);
         setBetasArray(message_from_server.params["bt"]);
@@ -221,7 +221,7 @@ const ClientPage = () => {
    * @returns
    */
   const handleClick = (socket, new_reward) => () => {
-    setCycle(cycle + 1);
+    // setCycle(cycle + 1);
     let params = actionAndUpdate(
       alphasArray,
       betasArray,

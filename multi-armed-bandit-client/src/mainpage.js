@@ -109,13 +109,14 @@ const MainPage = () => {
             <thead>
               <tr>
                 <th>Id</th>
-                <th>Model Id</th>
-                <th>Start Alphas</th>
-                <th>End Alphas</th>
-                <th>Start Beta</th>
-                <th>End Beta</th>
+                <th>Model id</th>
+                <th>Start alphas</th>
+                <th>End alphas</th>
+                <th>Start beta</th>
+                <th>End beta</th>
                 <th>Cycle status</th>
                 <th>No of workers</th>
+                <th>Total rounds</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -130,6 +131,7 @@ const MainPage = () => {
                   <td>{training_cycle.end_betas}</td>
                   <td>{training_cycle.cycle_status}</td>
                   <td>{training_cycle.n_worker_participated}</td>
+                  <td>{training_cycle.rounds}</td>
                   <td>
                     <button className='btn waves-effect waves-light'>
                       Show Plot
