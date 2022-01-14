@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { TabMenu } from ".";
 import { processPlot } from "./common";
 import Plot from "react-plotly.js";
 import axios from "axios";
@@ -50,7 +49,7 @@ const MainPage = () => {
   }, []);
   return (
     <>
-      <TabMenu />
+      {/* <TabMenu /> */}
       <div className='row'>
         <div className='col s12 m6'>
           <h2> Models </h2>
@@ -116,7 +115,7 @@ const MainPage = () => {
                 <th>Start Beta</th>
                 <th>End Beta</th>
                 <th>Cycle status</th>
-                <th>No of workers participated</th>
+                <th>No of workers</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -124,7 +123,7 @@ const MainPage = () => {
               {training_cycle.map((training_cycle) => (
                 <tr key='{training_cycle.id}'>
                   <td>{training_cycle.id}</td>
-                  <td>{training_cycle.server_id}</td>
+                  <td>{training_cycle.server_data}</td>
                   <td>{training_cycle.start_alphas}</td>
                   <td>{training_cycle.end_alphas}</td>
                   <td>{training_cycle.start_betas}</td>
