@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { TabMenu } from "../src";
+import { processPlot } from "./common";
+import Plot from "react-plotly.js";
 import axios from "axios";
 
 const MainPage = () => {
   let [models, setModels] = useState([]);
   let [training_cycle, setTrainingCycle] = useState([]);
+  let [plotdata, setPlotData] = useState([]);
+  const [value, setValue] = React.useState(0);
+
   const getModels = () => {
     axios
       .get("http://127.0.0.1:8000/api/models")
@@ -29,19 +33,22 @@ const MainPage = () => {
         console.log(error);
       });
   };
+
+  useEffect(() => {
+    setPlotData();
+    // processPlot(
+    //   alphas_betas[0].dataSync(),
+    //   alphas_betas[1].dataSync(),
+    //   bookTypes
+    // )
+  }, [value]);
+
   useEffect(() => {
     getModels();
   }, []);
   return (
     <>
       {/* <TabMenu /> */}
-      <div className='row'>
-        <div className='col s12 m4'></div>
-        <div className='col s12 m4 center-align'>
-          <a className='waves-effect waves-light btn'>Start New Client</a>
-        </div>
-        <div className='col s12 m4'></div>
-      </div>
       <div className='row'>
         <div className='col s12 m6'>
           <h2> Models </h2>
@@ -69,12 +76,22 @@ const MainPage = () => {
                   <td>{model.options}</td>
                   <td>{model.max_workers}</td>
                   <td>
-                    <button
-                      className='btn waves-effect waves-light'
-                      onClick={() => getTrainingData(model.id)}
-                    >
-                      <i className='material-icons right'>send</i>
-                    </button>
+                    <div>
+                      <button className='btn waves-effect waves-light'>
+                        Start Client
+                        <i className='material-icons right'>arrow_forward</i>
+                      </button>
+                    </div>
+                    <br />
+                    <div>
+                      <button
+                        className='btn waves-effect waves-light'
+                        onClick={() => getTrainingData(model.id)}
+                      >
+                        Trainings
+                        <i className='material-icons right'>send</i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -94,6 +111,7 @@ const MainPage = () => {
                 <th>End Beta</th>
                 <th>Cycle status</th>
                 <th>No of workers participated</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -107,10 +125,33 @@ const MainPage = () => {
                   <td>{training_cycle.end_betas}</td>
                   <td>{training_cycle.cycle_status}</td>
                   <td>{training_cycle.n_worker_participated}</td>
+                  <td>
+                    <button className='btn waves-effect waves-light'>
+                      Show Plot
+                      <i className='material-icons right'>insert_chart</i>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+      <div className='row'>
+        <div className='col s12 m12'>
+          <h2>Plot</h2>
+          <Plot data={plotdata} layout={{ title: "Distribution Plot" }} />
+
+          <input
+            id='typeinp'
+            type='range'
+            min='0'
+            max='1000'
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            step='1'
+          />
+          {value}
         </div>
       </div>
     </>
