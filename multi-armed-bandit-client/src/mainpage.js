@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { processPlot } from "./common";
 import Plot from "react-plotly.js";
 import axios from "axios";
+import { BOOK_TYPES } from "./data";
 
 const MainPage = () => {
   let [models, setModels] = useState([]);
   let [training_cycle, setTrainingCycle] = useState([]);
   let [plotdata, setPlotData] = useState([]);
+  let [training_cycle_details, setTrainingCycleDetails] = useState([]);
+  const [maxvalue, setMaxValue] = React.useState(500);
   const [value, setValue] = React.useState(0);
 
   const getModels = () => {
@@ -35,14 +38,39 @@ const MainPage = () => {
       });
   };
 
-  useEffect(() => {
-    setPlotData();
-    // processPlot(
-    //   alphas_betas[0].dataSync(),
-    //   alphas_betas[1].dataSync(),
-    //   bookTypes
-    // )
-  }, [value]);
+  const handleSliderChange = ($slider_value) => {
+    setValue($slider_value);
+    let params = JSON.parse(training_cycle_details[$slider_value]["params"]);
+
+    let alphas, betas;
+    alphas = params["alphas"].split(",");
+    betas = params["betas"].split(",");
+
+    alphas = alphas.map(function (x) {
+      return parseFloat(x, 10);
+    });
+    betas = betas.map(function (x) {
+      return parseFloat(x, 10);
+    });
+
+    setPlotData(processPlot(alphas, betas, BOOK_TYPES));
+  };
+  const getTrainingCycleDetailsData = ($training_cycle_id) => {
+    axios
+      .get(
+        "http://127.0.0.1:8000/api/trainings/" +
+          $training_cycle_id +
+          "/cycle_details/"
+      )
+      .then((response) => {
+        setMaxValue(response.data.length);
+        setTrainingCycleDetails(response.data);
+      })
+      .catch((error) => {
+        // handle error
+        console.log(error);
+      });
+  };
 
   useEffect(() => {
     getModels();
@@ -133,7 +161,12 @@ const MainPage = () => {
                   <td>{training_cycle.n_worker_participated}</td>
                   <td>{training_cycle.rounds}</td>
                   <td>
-                    <button className='btn waves-effect waves-light'>
+                    <button
+                      className='btn waves-effect waves-light'
+                      onClick={() =>
+                        getTrainingCycleDetailsData(training_cycle.id)
+                      }
+                    >
                       Show Plot
                       <i className='material-icons right'>insert_chart</i>
                     </button>
@@ -153,9 +186,9 @@ const MainPage = () => {
             id='typeinp'
             type='range'
             min='0'
-            max='1000'
+            max={maxvalue}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => handleSliderChange(e.target.value)}
             step='1'
           />
           {value}
