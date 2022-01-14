@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
-import { MainPage } from "./src";
+import { FirstPage } from "./src";
 
 const App = () => {
   return (
@@ -9,6 +9,8 @@ const App = () => {
       <Router>
         <Routes>
           <Route path='/' element={<MainPage />} />
+          <Route path='/admin' element={<AdminPage />} />
+          <Route path='/client-ui' element={<ClientPage />} />
         </Routes>
       </Router>
     </>

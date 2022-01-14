@@ -1,3 +1,5 @@
+import ClientPage from "./clientpage";
 import MainPage from "./mainpage";
+import AdminPage from "./adminpage";
 
-export { MainPage };
+export { ClientPage, MainPage, AdminPage };
