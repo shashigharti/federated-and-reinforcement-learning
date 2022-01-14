@@ -7,6 +7,11 @@ import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as ss
+from core.serializers import (
+    GlobalTrainingCycleSerializer,
+    ServerDataSerializer,
+    TrainingCycleDetailsSerializer,
+)
 
 
 @sync_to_async(thread_sensitive=True)
@@ -16,11 +21,9 @@ def get_model_detail(model_name):
 
 
 @sync_to_async(thread_sensitive=True)
-def get_cycle_detail(model_name):
+def get_training_detail(training_cycle_id):
     training_details = (
-        GlobalTrainingCycle.objects.all()
-        .filter(model_name=model_name)
-        .order_by("-updated_at")
+        GlobalTrainingCycle.objects.all().filter(pk=training_cycle_id).first()
     )
     return training_details
 
@@ -35,7 +38,7 @@ def create_training(pdata):
 @sync_to_async(thread_sensitive=True)
 def update_training(training_cycle_id, pdata):
     response = requests.put(
-        "http://127.0.0.1:8000/api/trainings/update/{}".format(training_cycle_id),
+        "http://127.0.0.1:8000/api/trainings/update/{}/".format(training_cycle_id),
         json=pdata,
     )
     print(response.json())
@@ -50,7 +53,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
     isCycleEnd = False
     rounds = 0  # total number of rounds
     current_model_id = 1
-    current_model_training_id = 0
+    global_training_cycle_id = 0
 
     async def connect(self):
         self.room_name = "room_1"
@@ -127,16 +130,16 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                     ):
                         self.mode = "training"
                         response_to_user = {
-                            # "type": "send_message",
-                            # "message": {
-                            #     "type": "init-params",
-                            #     "params": {
-                            #         "al": self.weights[self.room_group_name]["alphas"],
-                            #         "bt": self.weights[self.room_group_name]["betas"],
-                            #         "dim": self.weights[self.room_group_name]["dim"],
-                            #         "cycle": self.cycle,
-                            #     },
-                            # },
+                            "type": "send_message",
+                            "message": {
+                                "type": "init-params",
+                                "params": {
+                                    "al": self.weights[self.room_group_name]["alphas"],
+                                    "bt": self.weights[self.room_group_name]["betas"],
+                                    "dim": self.weights[self.room_group_name]["dim"],
+                                    "cycle": self.cycle,
+                                },
+                            },
                         }
                         print(
                             "\n\n\n[Socket] ============== Training Mode Started ================== "
@@ -155,8 +158,9 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
 
                         # Create training data
                         data = await create_training(pdata)
-                        print(data)
-                        print("after create training")
+                        self.global_training_cycle_id = data["id"]
+                        print("Training registered")
+
                     else:
                         print(
                             "[Socket] Waiting for {} more client/s".format(
@@ -237,6 +241,25 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                 self.clients[self.room_group_name]["weights"] = {}
                 self.clients[self.room_group_name]["ids"] = []
                 self.isCycleEnd = True
+
+                # Update global training cycle
+                pdata = await get_training_detail(self.global_training_cycle_id)
+                if pdata != None:
+                    globaltrainingcycle = GlobalTrainingCycleSerializer(pdata)
+
+                    print("before", pdata)
+                    pdata = globaltrainingcycle.data
+                    pdata["end_alphas"] = ",".join(
+                        [str(al) for al in self.weights[self.room_group_name]["alphas"]]
+                    )
+                    pdata["end_betas"] = ",".join(
+                        [str(al) for al in self.weights[self.room_group_name]["betas"]]
+                    )
+                    pdata["cycle_status"] = "inactive"
+                    print("after", pdata)
+
+                    # Update training data
+                    await update_training(self.global_training_cycle_id, pdata)
 
                 response_to_user = {
                     "type": "send_message",
