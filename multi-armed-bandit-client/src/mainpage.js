@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { TabMenu } from ".";
 import { processPlot } from "./common";
 import Plot from "react-plotly.js";
 import axios from "axios";
@@ -48,7 +50,7 @@ const MainPage = () => {
   }, []);
   return (
     <>
-      {/* <TabMenu /> */}
+      <TabMenu />
       <div className='row'>
         <div className='col s12 m6'>
           <h2> Models </h2>
@@ -77,10 +79,14 @@ const MainPage = () => {
                   <td>{model.max_workers}</td>
                   <td>
                     <div>
-                      <button className='btn waves-effect waves-light'>
+                      <Link
+                        className='btn waves-effect waves-light'
+                        to='/client'
+                        target={"_blank"}
+                      >
                         Start Client
                         <i className='material-icons right'>arrow_forward</i>
-                      </button>
+                      </Link>
                     </div>
                     <br />
                     <div>
@@ -89,7 +95,7 @@ const MainPage = () => {
                         onClick={() => getTrainingData(model.id)}
                       >
                         Trainings
-                        <i className='material-icons right'>send</i>
+                        <i className='material-icons right'>arrow_forward</i>
                       </button>
                     </div>
                   </td>

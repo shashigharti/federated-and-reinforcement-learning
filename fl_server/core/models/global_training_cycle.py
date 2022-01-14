@@ -11,6 +11,7 @@ class GlobalTrainingCycle(models.Model):
     end_betas = models.CharField(max_length=200, default="")
     cycle_status = models.CharField(max_length=25, default="inactive")
     n_worker_participated = models.IntegerField(default=2)
+    rounds = models.IntegerField(default=100)
     config = JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

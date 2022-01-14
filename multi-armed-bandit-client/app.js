@@ -9,7 +9,7 @@ const App = () => {
         <Routes>
           <Route exact path='/' element={<MainPage />} />
           <Route exact path='/admin' element={<AdminPage />} />
-          <Route exact path='/client' element={<clientPage />} />
+          <Route exact path='/client' element={<ClientPage />} />
         </Routes>
       </Router>
     </>

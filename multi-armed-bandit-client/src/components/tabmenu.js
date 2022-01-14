@@ -15,6 +15,9 @@ class TabMenu extends React.Component {
             <li className='tab col s3'>
               <Link to='/admin'>Admin</Link>
             </li>
+            <li className='tab col s3'>
+              <Link to='/client'>client</Link>
+            </li>
           </ul>
         </div>
       </div>

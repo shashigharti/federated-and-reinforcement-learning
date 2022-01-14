@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
 from core.models import ServerData, GlobalTrainingCycle
@@ -26,8 +27,19 @@ def get_cycle_detail(model_name):
 
 @sync_to_async(thread_sensitive=True)
 def create_training(pdata):
-    r = requests.post("http://127.0.0.1:8000/api/trainings/create", json=pdata)
-    print(r.json())
+    response = requests.post("http://127.0.0.1:8000/api/trainings/create", json=pdata)
+    print(response.json())
+    return response.json()
+
+
+@sync_to_async(thread_sensitive=True)
+def update_training(training_cycle_id, pdata):
+    response = requests.put(
+        "http://127.0.0.1:8000/api/trainings/update/{}".format(training_cycle_id),
+        json=pdata,
+    )
+    print(response.json())
+    return response.json()
 
 
 class FlConsumer(AsyncJsonWebsocketConsumer):
@@ -36,6 +48,9 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
     clients = {}
     mode = "registration"  # registration|training|avg
     isCycleEnd = False
+    rounds = 0  # total number of rounds
+    current_model_id = 1
+    current_model_training_id = 0
 
     async def connect(self):
         self.room_name = "room_1"
@@ -112,16 +127,16 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                     ):
                         self.mode = "training"
                         response_to_user = {
-                            "type": "send_message",
-                            "message": {
-                                "type": "init-params",
-                                "params": {
-                                    "al": self.weights[self.room_group_name]["alphas"],
-                                    "bt": self.weights[self.room_group_name]["betas"],
-                                    "dim": self.weights[self.room_group_name]["dim"],
-                                    "cycle": self.cycle,
-                                },
-                            },
+                            # "type": "send_message",
+                            # "message": {
+                            #     "type": "init-params",
+                            #     "params": {
+                            #         "al": self.weights[self.room_group_name]["alphas"],
+                            #         "bt": self.weights[self.room_group_name]["betas"],
+                            #         "dim": self.weights[self.room_group_name]["dim"],
+                            #         "cycle": self.cycle,
+                            #     },
+                            # },
                         }
                         print(
                             "\n\n\n[Socket] ============== Training Mode Started ================== "
@@ -140,6 +155,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
 
                         # Create training data
                         data = await create_training(pdata)
+                        print(data)
                         print("after create training")
                     else:
                         print(

@@ -1,6 +1,5 @@
-from core.serializers.server_data import ServerDataSerializer
 from rest_framework import serializers
-from core.models import GlobalTrainingCycle, ServerData
+from core.models import GlobalTrainingCycle
 
 
 class GlobalTrainingCycleSerializer(serializers.ModelSerializer):
