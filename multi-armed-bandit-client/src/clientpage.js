@@ -213,7 +213,10 @@ const ClientPage = () => {
         setBetasArray(message_from_server.params["bt"]);
       }
     };
-  }, [socket]);AdminPage
+  }, [socket]);
+
+  /**
+   * Handle user action
    * @param {number} reward
    * @returns
    */

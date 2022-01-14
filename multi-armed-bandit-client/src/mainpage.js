@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { TabMenu } from "../src";
+
 const MainPage = () => {
   return (
     <>
-      <div id='main'>This is MainPage</div>
+      <TabMenu />
+      <div id='main'>This is MainPage page</div>
     </>
   );
 };
