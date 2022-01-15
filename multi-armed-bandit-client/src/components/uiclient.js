@@ -1,11 +1,8 @@
 /** @jsx jsx */
 import { jsx } from "@emotion/core";
-import React, { useState, useEffect } from "react";
-
 import backgroundGradient from "./../../background-gradient.svg";
 import logoWhite from "./../../logo-white.svg";
 import logoColor from "./../../logo-color.svg";
-
 import "@fortawesome/fontawesome-free/js/all";
 
 const fontFamily =
@@ -104,7 +101,7 @@ const Vision = ({ button }) => {
   );
 };
 
-const Button = ({ background, icon, onClick }) => (
+const Button = ({ background, icon }) => (
   <button
     css={{
       fontFamily,
@@ -131,7 +128,6 @@ const Button = ({ background, icon, onClick }) => (
         border: 0,
       },
     }}
-    onClick={onClick}
   >
     <span css={{ marginRight: 60 }}>Sign Up</span>
     {icon === "arrow" && <i className='fas fa-arrow-right' />}
@@ -209,14 +205,10 @@ const Footer = () => {
   );
 };
 
-const UIClient = ({ isLoaded, config, onButtonClick, start }) => {
+const UIClient = ({ isLoaded, config }) => {
   if (isLoaded && config) {
     const button = (
-      <Button
-        background={config.buttonColor}
-        icon={config.buttonIcon}
-        onClick={onButtonClick}
-      />
+      <Button background={config.buttonColor} icon={config.buttonIcon} />
     );
 
     return (

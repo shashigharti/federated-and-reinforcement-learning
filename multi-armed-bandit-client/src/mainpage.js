@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { processPlot } from "./common";
 import Plot from "react-plotly.js";
 import axios from "axios";
-import { BOOK_TYPES } from "./data";
+import { BOOK_TYPES, OPTION_TYPES } from "./data";
 
 const MainPage = () => {
   let [models, setModels] = useState([]);
@@ -12,6 +12,7 @@ const MainPage = () => {
   let [training_cycle_details, setTrainingCycleDetails] = useState([]);
   const [maxvalue, setMaxValue] = React.useState(500);
   const [value, setValue] = React.useState(0);
+  const [modelType, setModelType] = React.useState("");
 
   const getModels = () => {
     axios
@@ -41,24 +42,26 @@ const MainPage = () => {
         // handle error
         console.log(error);
       });
+    setModelType($model_id == 2 ? "ui-client" : "book-client");
   };
 
   const handleSliderChange = ($slider_value) => {
     setValue($slider_value);
     let params = JSON.parse(training_cycle_details[$slider_value]["params"]);
-
     let alphas, betas;
     alphas = params["alphas"].split(",");
     betas = params["betas"].split(",");
-
     alphas = alphas.map(function (x) {
       return parseFloat(x, 10);
     });
     betas = betas.map(function (x) {
       return parseFloat(x, 10);
     });
-
-    setPlotData(processPlot(alphas, betas, BOOK_TYPES));
+    if (modelType == "ui-client") {
+      setPlotData(processPlot(alphas, betas, OPTION_TYPES));
+    } else {
+      setPlotData(processPlot(alphas, betas, BOOK_TYPES));
+    }
   };
   const getTrainingCycleDetailsData = ($training_cycle_id) => {
     axios
@@ -186,7 +189,6 @@ const MainPage = () => {
         <div className='col s12 m12'>
           <h2>Plot</h2>
           <Plot data={plotdata} layout={{ title: "Distribution Plot" }} />
-
           <input
             id='typeinp'
             type='range'

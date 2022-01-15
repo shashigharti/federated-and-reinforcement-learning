@@ -1,5 +1,6 @@
 const { jStat } = require("jstat");
 import * as tf from "@tensorflow/tfjs-core";
+import { COLORS } from "./data";
 
 const binomial_sample = (accept_rate) => (Math.random() < accept_rate ? 1 : 0);
 class Simulator {
@@ -20,9 +21,9 @@ class Simulator {
  * @param {Array} bookTypes
  * @returns {Array} plotdata
  */
-const processPlot = (alphasArray, betasArray, bookTypes) => {
+const processPlot = (alphasArray, betasArray, labelTypes) => {
   const x = tf.linspace(0, 1, 100).dataSync();
-  const colors = { 0: "red", 1: "green", 2: "blue" };
+  const colors = COLORS;
 
   let plotdata = [];
   for (let opt = 0; opt < alphasArray.length; opt++) {
@@ -33,7 +34,7 @@ const processPlot = (alphasArray, betasArray, bookTypes) => {
     let d = {
       x: x,
       y: y,
-      name: bookTypes[opt],
+      name: labelTypes[opt],
       type: "scatter",
       mode: "lines+markers",
       marker: { color: colors[opt] },
@@ -57,7 +58,7 @@ const argMax = (d) =>
  * @param {Tensor1D} samples
  * @param {Tensor1D} alphas
  * @param {Tensor1D} betas
- * @returns
+ * @returns {Array}
  */
 const banditThompson = (rewards, samples, alphas, betas) => {
   const prev_alpha = alphas;
@@ -74,7 +75,7 @@ const banditThompson = (rewards, samples, alphas, betas) => {
  * @param {Tensor1D} betas
  * @param {Tensor1D} n_alphas
  * @param {Tensor1D} n_betas
- * @returns
+ * @returns {Array}
  */
 const calcGradient = (alphas, betas, n_alphas, n_betas) => {
   let d_alphas, d_betas;
@@ -87,7 +88,7 @@ const calcGradient = (alphas, betas, n_alphas, n_betas) => {
  * Simulate user action
  * @param {Array} preferences
  * @param {number} option_id
- * @returns
+ * @returns {number}
  */
 const simulate = (simulated_rates, selectedOption) => {
   const env = new Simulator(simulated_rates);

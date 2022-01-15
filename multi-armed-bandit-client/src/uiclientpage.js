@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 const { jStat } = require("jstat");
 import { argMax, processPlot, simulate, actionAndUpdate } from "./common";
 import { ALL_UIOPTIONS } from "./data";
-import UIClient from "./components/uiclient";
+// import UIClient from "./components/uiclient";
 
 const UIClientPage = () => {
   // Socket remote server
@@ -95,6 +95,7 @@ const UIClientPage = () => {
           gradWeights[0].dataSync(),
           gradWeights[1].dataSync()
         );
+        console.log("selected option", selectedOption);
 
         socket.send(
           JSON.stringify({
@@ -187,9 +188,6 @@ const UIClientPage = () => {
 
           setAlphasArray(message_from_server.params["al"]);
           setBetasArray(message_from_server.params["bt"]);
-
-          // setPolicy(policy);
-          // Commenting this part; the policy is received from the server.
         } else {
           console.log("[Socket]Dimension does not match. ");
         }
@@ -208,50 +206,10 @@ const UIClientPage = () => {
     };
   }, [socket]);
 
-  /**
-   * Handle user action
-   * @param {number} reward
-   * @returns
-   */
-  const handleClick = (socket, new_reward) => () => {
-    let params = actionAndUpdate(
-      alphasArray,
-      betasArray,
-      selectedOption,
-      new_reward
-    );
-
-    setReward(reward + new_reward);
-
-    let gradWeights, alphas_betas;
-    gradWeights = params[0];
-    alphas_betas = params[1];
-
-    console.log(
-      "[Socket]Diff: alphas and betas",
-      gradWeights[0].dataSync(),
-      gradWeights[1].dataSync()
-    );
-
-    // Send data to the server
-    console.log("[Socket]Sending new gradients to the server");
-    socket.send(
-      JSON.stringify({
-        event: "update", // 0 ->  event
-        alphas: gradWeights[0].dataSync(), // 1 ->  alphas
-        betas: gradWeights[1].dataSync(), // 2 -> betas
-        client_id: clientId,
-      })
-    );
-  };
-
   return (
     <>
-      <UIClient
-        config={uiOptions[selectedOption]}
-        isLoaded={true}
-        onButtonClick={handleClick}
-      ></UIClient>
+      ddddd
+      {/* <UIClient config={uiOptions[selectedOption]} isLoaded={false}></UIClient> */}
     </>
   );
 };
