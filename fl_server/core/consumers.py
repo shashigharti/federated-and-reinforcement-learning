@@ -60,8 +60,8 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
     global_training_cycle_id = 0
 
     async def connect(self):
-        self.room_name = "room_1"
-        self.room_group_name = "room_1"
+        self.room_name = str(self.scope["url_route"]["kwargs"]["model_name"])
+        self.room_group_name = str(self.scope["url_route"]["kwargs"]["model_name"])
 
         print("\n\n[Socket] NEW CONNECTIONS", self.room_name)
         print("[Socket] init params")
@@ -108,6 +108,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
 
         print("[Socket] Data received:{}".format(text_data))
         if event == "connected":
+            self.room_name = response_from_user.get("model_name", None)
             if self.mode == "training":
                 print("[Socket] Training Mode, No more registration")
 
