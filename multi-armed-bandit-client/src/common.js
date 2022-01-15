@@ -96,8 +96,8 @@ const simulate = (simulated_rates, selectedOption) => {
 
 const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
   let alphas_betas;
-  let rewardVector = [0, 0, 0];
-  let sampledVector = [0, 0, 0];
+  let rewardVector = Array(alphasArray.length).fill(0);
+  let sampledVector = Array(alphasArray.length).fill(0);
   console.log(
     "action update selectedoption reward",
     alphasArray,

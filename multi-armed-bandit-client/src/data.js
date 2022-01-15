@@ -16,4 +16,22 @@ const BOOKS = {
   ],
 };
 const BOOK_TYPES = ["spiritual", "philosophical", "physics"];
-export { BOOKS, BOOK_TYPES };
+
+// All possible UI options
+const ALL_UIOPTIONS = [
+  ["black", "gradient"], // heroBackground
+  ["hero", "vision"], // buttonPosition
+  ["arrow", "user", "code"], // buttonIcon
+  ["blue", "white"], // buttonColor
+]
+  .reduce((a, b) =>
+    a.reduce((r, v) => r.concat(b.map((w) => [].concat(v, w))), [])
+  )
+  .map(([heroBackground, buttonPosition, buttonIcon, buttonColor]) => ({
+    heroBackground,
+    buttonPosition,
+    buttonIcon,
+    buttonColor,
+  }));
+
+export { BOOKS, BOOK_TYPES, ALL_UIOPTIONS };

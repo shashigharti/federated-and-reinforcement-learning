@@ -4,8 +4,8 @@ import Plot from "react-plotly.js";
 import { argMax, processPlot, simulate, actionAndUpdate } from "./common";
 import { BOOKS, BOOK_TYPES } from "./data";
 
-const ClientPage = () => {
-  const url = "ws://127.0.0.1:8000/fl-server";
+const BookClientPage = () => {
+  const url = "ws://127.0.0.1:8000/fl-server/example_1";
   const dim = 3;
   const stopAfter = 400;
   const policies = [
@@ -309,4 +309,4 @@ const ClientPage = () => {
   );
 };
 
-export default ClientPage;
+export default BookClientPage;

@@ -18,6 +18,11 @@ const MainPage = () => {
       .get("http://127.0.0.1:8000/api/models")
       .then((response) => {
         // handle success
+        response.data = response.data.map((item) => ({
+          ...item,
+          client_type:
+            item.model_name === "example_2" ? "ui-client" : "book-client",
+        }));
         setModels(response.data);
       })
       .catch((error) => {
@@ -108,7 +113,7 @@ const MainPage = () => {
                     <div>
                       <Link
                         className='btn waves-effect waves-light'
-                        to='/client'
+                        to={"/" + model.client_type}
                         target={"_blank"}
                       >
                         Start Client
