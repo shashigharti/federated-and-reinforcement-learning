@@ -96,7 +96,7 @@ const MainPage = () => {
             </thead>
             <tbody>
               {models.map((model) => (
-                <tr key='{model.id}'>
+                <tr key={model.id}>
                   <td>{model.id}</td>
                   <td>{model.model_name}</td>
                   <td>{model.alphas}</td>
@@ -132,7 +132,7 @@ const MainPage = () => {
           </table>
         </div>
         <div className='col s12 m6'>
-          <h2> Training Models </h2>
+          <h2> Training Cycle </h2>
           <table>
             <thead>
               <tr>
@@ -150,7 +150,7 @@ const MainPage = () => {
             </thead>
             <tbody>
               {training_cycle.map((training_cycle) => (
-                <tr key='{training_cycle.id}'>
+                <tr key={training_cycle.id}>
                   <td>{training_cycle.id}</td>
                   <td>{training_cycle.server_data}</td>
                   <td>{training_cycle.start_alphas}</td>

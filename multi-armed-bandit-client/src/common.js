@@ -28,7 +28,6 @@ const processPlot = (alphasArray, betasArray, bookTypes) => {
   for (let opt = 0; opt < alphasArray.length; opt++) {
     let y = [];
     for (let ind = 0; ind < x.length; ind++) {
-      console.log(x[ind], alphasArray[opt], betasArray[opt]);
       y.push(jStat.beta.pdf(x[ind], alphasArray[opt], betasArray[opt]));
     }
     let d = {
