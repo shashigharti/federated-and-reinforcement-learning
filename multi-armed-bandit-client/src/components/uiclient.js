@@ -1,8 +1,11 @@
 /** @jsx jsx */
 import { jsx } from "@emotion/core";
+import React, { useState, useEffect } from "react";
+
 import backgroundGradient from "./../../background-gradient.svg";
 import logoWhite from "./../../logo-white.svg";
 import logoColor from "./../../logo-color.svg";
+
 import "@fortawesome/fontawesome-free/js/all";
 
 const fontFamily =
@@ -101,8 +104,9 @@ const Vision = ({ button }) => {
   );
 };
 
-const Button = ({ background, icon }) => (
+const Button = ({ background, icon, className, onClick }) => (
   <button
+    className={className}
     css={{
       fontFamily,
       textTransform: "uppercase",
@@ -128,6 +132,7 @@ const Button = ({ background, icon }) => (
         border: 0,
       },
     }}
+    onClick={onClick}
   >
     <span css={{ marginRight: 60 }}>Sign Up</span>
     {icon === "arrow" && <i className='fas fa-arrow-right' />}
@@ -205,43 +210,46 @@ const Footer = () => {
   );
 };
 
-const UIClient = ({ isLoaded, config }) => {
-  if (isLoaded && config) {
-    const button = (
-      <Button background={config.buttonColor} icon={config.buttonIcon} />
-    );
-
-    return (
-      <div
-        css={{
-          minHeight: "100vh",
-          display: "grid",
-          gridTemplateRows: "auto 1fr auto",
-        }}
-      >
-        <Hero
-          background={config.heroBackground}
-          button={config.buttonPosition === "hero" ? button : null}
-        />
-        <Vision button={config.buttonPosition === "vision" ? button : null} />
-        <Footer />
-      </div>
-    );
-  }
+const UIClient = ({ config }) => {
+  let [uiconfig, setUIConfig] = useState(config);
+  // const button = (
+  //   <Button background={uiconfig.buttonColor} icon={uiconfig.buttonIcon} />
+  // );
+  const showVision = () => {
+    return uiconfig.buttonPosition === "vision" ? "" : "hide";
+  };
+  const showHero = () => {
+    return uiconfig.buttonPosition === "hero" ? "" : "hide";
+  };
 
   return (
     <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+      css={{
         minHeight: "100vh",
+        display: "grid",
+        gridTemplateRows: "auto 1fr auto",
       }}
     >
-      <i
-        className='fas fa-circle-notch fa-spin fa-5x'
-        style={{ color: "#ccc" }}
-      ></i>
+      <Hero
+        background={uiconfig.heroBackground}
+        button={
+          <Button
+            background={uiconfig.buttonColor}
+            icon={uiconfig.buttonIcon}
+            className={showHero()}
+          />
+        }
+      />
+      <Vision
+        button={
+          <Button
+            background={uiconfig.buttonColor}
+            icon={uiconfig.buttonIcon}
+            className={showVision()}
+          />
+        }
+      />
+      <Footer />
     </div>
   );
 };

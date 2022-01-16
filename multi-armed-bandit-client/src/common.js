@@ -100,7 +100,7 @@ const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
   let rewardVector = Array(alphasArray.length).fill(0);
   let sampledVector = Array(alphasArray.length).fill(0);
   console.log(
-    "action update selectedoption reward",
+    "Action update selectedoption reward",
     alphasArray,
     betasArray,
     selectedOption,

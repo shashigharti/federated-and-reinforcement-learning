@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 const { jStat } = require("jstat");
-import { argMax, processPlot, simulate, actionAndUpdate } from "./common";
+import { argMax, simulate, actionAndUpdate } from "./common";
 import { ALL_UIOPTIONS } from "./data";
-// import UIClient from "./components/uiclient";
+import UIClient from "./components/uiclient";
 
 const UIClientPage = () => {
   // Socket remote server
   const url = "ws://127.0.0.1:8000/fl-server/example_2";
   const dim = 24;
-  const stopAfter = 400;
+  const stopAfter = 10;
   const policies = [
     [
       0.7, 0.01, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.01, 0.02,
@@ -33,6 +33,7 @@ const UIClientPage = () => {
   let [reward, setReward] = useState([]);
   let [betaDistribution, setBetaDistribution] = useState([]);
   let [clientId, SetClientId] = useState(null);
+  let [config, setConfig] = useState(ALL_UIOPTIONS[0]);
 
   // User options : 24 different ui design
   const [uiOptions, setUIOptions] = useState(ALL_UIOPTIONS);
@@ -40,8 +41,6 @@ const UIClientPage = () => {
   const [endCycle, setEndCycle] = useState(false);
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
-  const [plotdata, setPlotData] = useState([]);
-  const [imgSrc, setImageSrc] = useState("");
 
   /**
    * Choose the best option(with highest reward probability) among other various options;
@@ -95,7 +94,6 @@ const UIClientPage = () => {
           gradWeights[0].dataSync(),
           gradWeights[1].dataSync()
         );
-        console.log("selected option", selectedOption);
 
         socket.send(
           JSON.stringify({
@@ -111,12 +109,18 @@ const UIClientPage = () => {
   };
 
   useEffect(() => {
+    setSelectedOption(2);
     setOptions(Object.keys(uiOptions).length);
   }, []);
 
   useEffect(() => {
+    setConfig(uiOptions[selectedOption]);
+    console.log("Changed selected option", selectedOption, config);
+  }, [selectedOption]);
+
+  useEffect(() => {
     setCycle(cycle + 1);
-    console.log(cycle);
+    console.log("cycle", cycle);
   }, [endCycle]);
 
   // Take initial action on params receive from the server
@@ -208,8 +212,9 @@ const UIClientPage = () => {
 
   return (
     <>
-      ddddd
-      {/* <UIClient config={uiOptions[selectedOption]} isLoaded={false}></UIClient> */}
+      <div id='main'>
+        <UIClient config={config}></UIClient>
+      </div>
     </>
   );
 };

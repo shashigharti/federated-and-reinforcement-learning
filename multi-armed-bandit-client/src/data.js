@@ -60,6 +60,7 @@ const ALL_UIOPTIONS = [
     buttonIcon,
     buttonColor,
   }));
+console.log(ALL_UIOPTIONS);
 
 const OPTION_TYPES = Object.keys(ALL_UIOPTIONS).map(function (key, index) {
   return `uioption - ${key}`;
