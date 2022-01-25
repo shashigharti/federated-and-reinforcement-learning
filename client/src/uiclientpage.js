@@ -4,27 +4,17 @@ import { argMax, simulate, actionAndUpdate } from "./common";
 import { ALL_UIOPTIONS } from "./data";
 import UIClient from "./components/uiclient";
 import ErrorBoundary from "./components/errorboundary";
+import { generateProbabilities } from "./common";
 
 const UIClientPage = () => {
   // Socket remote server
   const url = "ws://127.0.0.1:8000/fl-server/example_2";
   const dim = 24;
+  const no_of_clients = 2;
   const stopAfter = 1000;
-  const policies = [
-    [
-      0.7, 0.01, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.01, 0.02,
-      0.02, 0.01, 0.01, 0.02, 0.01, 0.02, 0.01, 0.01, 0.02, 0.01, 0.01, 0.01,
-    ],
-    [
-      0.6, 0.02, 0.03, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.05, 0.01, 0.05,
-      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.01, 0.01,
-    ],
-    [
-      0.7, 0.02, 0.03, 0.01, 0.01, 0.02, 0.01, 0.01, 0.01, 0.05, 0.01, 0.0,
-      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    ],
-  ];
+  const [policies, setPolicies] = useState([]);
   let [simulation, setSimulation] = useState(true);
+  let samePolicy = true;
   let [socket, setSocket] = useState(null);
 
   // Features/parameters that determine the users action
@@ -110,9 +100,23 @@ const UIClientPage = () => {
   };
 
   useEffect(() => {
+    // Generate probabilities and set policies
+    let policies = [];
+    let policy = null;
+
+    for (let step = 0; step < no_of_clients; step++) {
+      if (samePolicy == true) {
+        policy = generateProbabilities(24, 0.7);
+      }
+      policies.push(policy);
+    }
+    setPolicies(policies);
+  }, []);
+
+  useEffect(() => {
     setSelectedOption(2);
     setOptions(Object.keys(uiOptions).length);
-  }, []);
+  }, [policies]);
 
   useEffect(() => {
     setConfig(uiOptions[selectedOption]);

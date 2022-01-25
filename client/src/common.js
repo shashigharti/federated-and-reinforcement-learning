@@ -133,7 +133,26 @@ const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
   return [gradWeights, alphas_betas];
 };
 
+/**
+ * Generate probabilities of size given by dimension. The probabilities sums up to 1
+ * @param {number} dim
+ * @returns {Array}
+ */
+const generateProbabilities = (dim, prob) => {
+  let probabilities = [];
+  let prob_for_remaining = (1 - prob) / dim;
+  for (let i = 0; i < dim; i++) {
+    if (i == 0) {
+      probabilities.push(prob);
+    } else {
+      probabilities.push(prob_for_remaining);
+    }
+  }
+  return probabilities;
+};
+
 export {
+  generateProbabilities,
   processPlot,
   argMax,
   banditThompson,
