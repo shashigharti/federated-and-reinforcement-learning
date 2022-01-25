@@ -102,13 +102,13 @@ const UIClientPage = () => {
   useEffect(() => {
     // Generate probabilities and set policies
     let policies = [];
-    let policy = null;
+    let policy = generateProbabilities(24, 0.7);
 
     for (let step = 0; step < no_of_clients; step++) {
-      if (samePolicy == true) {
+      policies.push(policy);
+      if (samePolicy != true) {
         policy = generateProbabilities(24, 0.7);
       }
-      policies.push(policy);
     }
     setPolicies(policies);
   }, []);
