@@ -16,6 +16,8 @@ This is a research project related to reinforcement learning/multiarmed bandit/f
 
 ## Backend Server
 
+Create virtual env for python and run the following commands:
+
 ### Install dependencies
 
 - Go to the folder server and install dependencies
