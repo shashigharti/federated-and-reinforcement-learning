@@ -134,10 +134,24 @@ const Button = ({ background, icon, className, onClick }) => (
     }}
     onClick={onClick}
   >
-    <span css={{ marginRight: 60 }}>Sign Up</span>
-    {icon === "arrow" && <i className='fas fa-arrow-right' />}
-    {icon === "user" && <i className='fas fa-user-plus' />}
-    {icon === "code" && <i className='fas fa-code' />}
+    <span css={{ marginRight: 60 }}>
+      Sign Up &nbsp;
+      {icon === "arrow" && (
+        <div key='btn-icon-arrow'>
+          <i className='fas fa-arrow-right' />
+        </div>
+      )}
+      {icon === "user" && (
+        <div key='btn-icon-user'>
+          <i className='fas fa-user-plus' />
+        </div>
+      )}
+      {icon === "code" && (
+        <div key='btn-icon-code'>
+          <i className='fas fa-code' />
+        </div>
+      )}
+    </span>
   </button>
 );
 
@@ -211,15 +225,12 @@ const Footer = () => {
 };
 
 const UIClient = ({ config }) => {
-  let [uiconfig, setUIConfig] = useState(config);
-  // const button = (
-  //   <Button background={uiconfig.buttonColor} icon={uiconfig.buttonIcon} />
-  // );
+  // let [uiconfig, setUIConfig] = useState(config);
   const showVision = () => {
-    return uiconfig.buttonPosition === "vision" ? "" : "hide";
+    return config.buttonPosition === "vision" ? "" : "hide";
   };
   const showHero = () => {
-    return uiconfig.buttonPosition === "hero" ? "" : "hide";
+    return config.buttonPosition === "hero" ? "" : "hide";
   };
 
   return (
@@ -231,11 +242,11 @@ const UIClient = ({ config }) => {
       }}
     >
       <Hero
-        background={uiconfig.heroBackground}
+        background={config.heroBackground}
         button={
           <Button
-            background={uiconfig.buttonColor}
-            icon={uiconfig.buttonIcon}
+            background={config.buttonColor}
+            icon={config.buttonIcon}
             className={showHero()}
           />
         }
@@ -243,8 +254,8 @@ const UIClient = ({ config }) => {
       <Vision
         button={
           <Button
-            background={uiconfig.buttonColor}
-            icon={uiconfig.buttonIcon}
+            background={config.buttonColor}
+            icon={config.buttonIcon}
             className={showVision()}
           />
         }

@@ -3,12 +3,13 @@ const { jStat } = require("jstat");
 import { argMax, simulate, actionAndUpdate } from "./common";
 import { ALL_UIOPTIONS } from "./data";
 import UIClient from "./components/uiclient";
+import ErrorBoundary from "./components/errorboundary";
 
 const UIClientPage = () => {
   // Socket remote server
   const url = "ws://127.0.0.1:8000/fl-server/example_2";
   const dim = 24;
-  const stopAfter = 10;
+  const stopAfter = 1000;
   const policies = [
     [
       0.7, 0.01, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.01, 0.02,
@@ -49,7 +50,7 @@ const UIClientPage = () => {
   const selectSample = () => {
     let samplesFromBetaDist = [];
 
-    // for each option find the probability using beta distribution
+    // For each option find the probability using beta distribution
     for (let opt = 0; opt < alphasArray.length; opt++) {
       // Get a beta distribution fro all alpha and beta pair
       samplesFromBetaDist[opt] = jStat.beta.sample(
@@ -213,7 +214,9 @@ const UIClientPage = () => {
   return (
     <>
       <div id='main'>
-        <UIClient config={config}></UIClient>
+        <ErrorBoundary>
+          <UIClient config={config}></UIClient>
+        </ErrorBoundary>
       </div>
     </>
   );
