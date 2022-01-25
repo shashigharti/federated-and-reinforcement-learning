@@ -23,6 +23,15 @@ Create virtual env for python and run the following commands:
 - Go to the folder server and install dependencies
   pip install -r requirements.php
 
+### Run Migrations
+
+- python manage.py makemigrations
+- python manage.py migrate
+
+### Seed ServerData Table
+
+- python manage.py loaddata core/fixtures/init-data.json
+
 ### Run Server
 
 - python manage.py runserver
