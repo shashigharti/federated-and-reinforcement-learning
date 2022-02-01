@@ -138,12 +138,13 @@ const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
  * @param {number} dim
  * @returns {Array}
  */
-const generateProbabilities = (dim, prob) => {
+const generateProbabilities = (dim, preference) => {
   let probabilities = [];
-  let prob_for_remaining = (1 - prob) / dim;
+
+  let prob_for_remaining = (1 - preference[0]) / dim;
   for (let i = 0; i < dim; i++) {
-    if (i == 0) {
-      probabilities.push(prob);
+    if (i == preference[1]) {
+      probabilities.push(preference[0]);
     } else {
       probabilities.push(prob_for_remaining);
     }
@@ -151,7 +152,54 @@ const generateProbabilities = (dim, prob) => {
   return probabilities;
 };
 
+/**
+ * Generate policies dynamically for given number of clients.
+ * @param {number} no_of_clients
+ * @returns {Array}
+ */
+const generatePolicies = (
+  no_of_clients,
+  samePolicy = true,
+  dim = 24,
+  client_preferences
+) => {
+  let policies = [];
+  let policy = generateProbabilities(dim, client_preferences[0]);
+
+  for (let step = 0; step < no_of_clients; step++) {
+    policies.push(policy);
+    if (samePolicy != true) {
+      policy = generateProbabilities(dim, client_preferences[step]);
+    }
+  }
+  return policies;
+};
+
+/**
+ * Generate client preferences
+ * @param {number} no_of_clients
+ * @returns
+ */
+let clientPreferences = (no_of_clients, index) => {
+  return Array(no_of_clients)
+    .fill()
+    .map(
+      function (x, i) {
+        if (this.samePolicy == true) {
+          return [0.7, this.idx];
+        }
+        return [0.7, i];
+      },
+      {
+        samePolicy: true,
+        idx: index,
+      }
+    );
+};
+
 export {
+  clientPreferences,
+  generatePolicies,
   generateProbabilities,
   processPlot,
   argMax,

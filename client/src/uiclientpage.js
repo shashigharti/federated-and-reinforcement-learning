@@ -4,14 +4,15 @@ import { argMax, simulate, actionAndUpdate } from "./common";
 import { ALL_UIOPTIONS } from "./data";
 import UIClient from "./components/uiclient";
 import ErrorBoundary from "./components/errorboundary";
-import { generateProbabilities } from "./common";
+import { generatePolicies, clientPreferences } from "./common";
 
 const UIClientPage = () => {
   // Socket remote server
   const url = "ws://127.0.0.1:8000/fl-server/example_2";
   const dim = 24;
-  const no_of_clients = 2;
+  const no_of_clients = 1;
   const stopAfter = 1000;
+  const updatePoliciesAfter = 300; // update policies after 300 rounds
   const [policies, setPolicies] = useState([]);
   let [simulation, setSimulation] = useState(true);
   let samePolicy = true;
@@ -100,17 +101,9 @@ const UIClientPage = () => {
   };
 
   useEffect(() => {
-    // Generate probabilities and set policies
-    let policies = [];
-    let policy = generateProbabilities(24, 0.7);
-
-    for (let step = 0; step < no_of_clients; step++) {
-      policies.push(policy);
-      if (samePolicy != true) {
-        policy = generateProbabilities(24, 0.7);
-      }
-    }
-    setPolicies(policies);
+    // set client preference to option 0
+    let client_preference = clientPreferences(no_of_clients, 0);
+    setPolicies(generatePolicies(no_of_clients, true, dim, client_preference));
   }, []);
 
   useEffect(() => {
@@ -125,6 +118,12 @@ const UIClientPage = () => {
 
   useEffect(() => {
     setCycle(cycle + 1);
+    if (cycle == updatePoliciesAfter) {
+      // change client preference to option 5
+      let client_preference = clientPreferences(no_of_clients, 5);
+      setPolicy(generatePolicies(no_of_clients, true, dim, client_preference));
+      console.log("policy changed");
+    }
     console.log("cycle", cycle);
   }, [endCycle]);
 
@@ -150,12 +149,12 @@ const UIClientPage = () => {
 
   useEffect(() => {
     console.log("clientId", clientId);
-    if (clientId != null) {
+    if (clientId != null && policies != null) {
       let local_policy = policies[clientId];
-      console.log("[Socket]Selected Policy:", local_policy);
+      console.log("[Socket]Selected Policy:", local_policy, policies);
       setPolicy(local_policy);
     }
-  }, [clientId]);
+  }, [clientId, policies]);
 
   useEffect(() => {
     if (socket == null) return;
@@ -163,7 +162,7 @@ const UIClientPage = () => {
     // Get params from server
     socket.onopen = (message) => {
       console.log("[Socket]Connecton Established");
-      let clientId = Math.floor(Math.random() * 3);
+      let clientId = Math.floor(Math.random() * no_of_clients);
       SetClientId(clientId);
       socket.send(
         JSON.stringify({
