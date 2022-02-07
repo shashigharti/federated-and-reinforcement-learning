@@ -41,6 +41,15 @@ Create virtual env for python and run the following commands:
 - Go to the folder client and install dependencies
   npm install
 
+### Set ENV
+
+- Rename .env.sample file to .env
+  API_ENDPOINT=127.0.0.1:8000
+  NO_OF_CLIENTS=2
+  UICLIENT_DIM=24
+  STOP_AFTER=1000
+  TIME_INTERVAL_FOR_POLICY_CHANGE=300
+
 ### Run Client
 
 - npm run start
