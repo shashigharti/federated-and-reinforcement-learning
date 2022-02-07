@@ -9,13 +9,12 @@ import { generatePolicies, clientPreferences } from "./common";
 const UIClientPage = () => {
   // Socket remote server
   const url = "ws://" + process.env.API_ENDPOINT + "/fl-server/example_2";
-  const dim = 24;
-  const no_of_clients = 1;
-  const stopAfter = 1000;
-  const updatePoliciesAfter = 300; // update policies after 300 rounds
+  const dim = process.env.UICLIENT_DIM; //default 24
+  const no_of_clients = process.env.NO_OF_CLIENTS; // default 2
+  const stopAfter = process.env.STOP_AFTER; // default 1000
+  const updatePoliciesAfter = process.env.TIME_INTERVAL_FOR_POLICY_CHANGE; // update policies after 300 rounds
   const [policies, setPolicies] = useState([]);
   let [simulation, setSimulation] = useState(true);
-  let samePolicy = true;
   let [socket, setSocket] = useState(null);
 
   // Features/parameters that determine the users action
