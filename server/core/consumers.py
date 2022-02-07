@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as ss
 from core.serializers import GlobalTrainingCycleSerializer
+from django.conf import settings
+
+
+print("endpoint => {}".format(settings.END_POINT))
 
 
 @sync_to_async(thread_sensitive=True)
@@ -25,7 +29,9 @@ def get_training_detail(training_cycle_id):
 
 @sync_to_async(thread_sensitive=True)
 def create_training(pdata):
-    response = requests.post("http://127.0.0.1:8000/api/trainings/create", json=pdata)
+    response = requests.post(
+        "{}/api/trainings/create".format(settings.END_POINT), json=pdata
+    )
     print(response.json())
     return response.json()
 
@@ -33,7 +39,7 @@ def create_training(pdata):
 @sync_to_async(thread_sensitive=True)
 def update_training(training_cycle_id, pdata):
     response = requests.put(
-        "http://127.0.0.1:8000/api/trainings/update/{}/".format(training_cycle_id),
+        "{}/api/trainings/update/{}/".format(settings.END_POINT, training_cycle_id),
         json=pdata,
     )
     print(response.json())
@@ -43,7 +49,7 @@ def update_training(training_cycle_id, pdata):
 @sync_to_async(thread_sensitive=True)
 def create_training_cycle_details(pdata):
     response = requests.post(
-        "http://127.0.0.1:8000/api/trainings/cycle_details/create", json=pdata
+        "{}/api/trainings/cycle_details/create".format(settings.END_POINT), json=pdata
     )
     print(response.json())
     return response.json()
