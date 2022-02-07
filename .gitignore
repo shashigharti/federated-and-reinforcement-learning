@@ -1,1 +1,4 @@
-multi-armed-bandit-client/node_modules
+client/node_modules
+server/db.sqlite3
+__pycache__
+.env
