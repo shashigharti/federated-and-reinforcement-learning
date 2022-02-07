@@ -1,5 +1,21 @@
+const webpack = require("webpack");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const dotenv = require("dotenv");
+
+// call dotenv and it will return an Object with a parsed key
+const env = dotenv.config().parsed;
+
+if (env == null) {
+  console.log("ENV not set. Create a .env file in the root folder \n\n");
+  return false;
+}
+
+// reduce it to a nice object, the same as before
+const envKeys = Object.keys(env).reduce((prev, next) => {
+  prev[`process.env.${next}`] = JSON.stringify(env[next]);
+  return prev;
+}, {});
 
 module.exports = (env, argv) => ({
   mode: argv.mode,
@@ -44,7 +60,10 @@ module.exports = (env, argv) => ({
       },
     ],
   },
-  plugins: [new HtmlWebpackPlugin({ template: "./index.html" })],
+  plugins: [
+    new HtmlWebpackPlugin({ template: "./index.html" }),
+    new webpack.DefinePlugin(envKeys),
+  ],
   externals: {
     "@tensorflow/tfjs-core": "tf",
   },
