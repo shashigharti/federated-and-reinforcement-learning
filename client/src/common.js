@@ -180,15 +180,15 @@ const generatePolicies = (
  * @param {number} no_of_clients
  * @returns
  */
-let clientPreferences = (no_of_clients, index) => {
+let clientPreferences = (no_of_clients, index, prob = 0.3) => {
   return Array(no_of_clients)
     .fill()
     .map(
       function (x, i) {
         if (this.samePolicy == true) {
-          return [0.7, this.idx];
+          return [prob, this.idx];
         }
-        return [0.7, i];
+        return [prob, i];
       },
       {
         samePolicy: true,

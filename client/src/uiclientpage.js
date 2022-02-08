@@ -101,7 +101,7 @@ const UIClientPage = () => {
 
   useEffect(() => {
     // set client preference to option 0
-    let client_preference = clientPreferences(no_of_clients, 0);
+    let client_preference = clientPreferences(no_of_clients, 0, 0.4);
     setPolicies(generatePolicies(no_of_clients, true, dim, client_preference));
   }, []);
 
@@ -119,7 +119,7 @@ const UIClientPage = () => {
     setCycle(cycle + 1);
     if (cycle == updatePoliciesAfter) {
       // change client preference to option 5
-      let client_preference = clientPreferences(no_of_clients, 5);
+      let client_preference = clientPreferences(no_of_clients, 5, 0.8);
       setPolicy(generatePolicies(no_of_clients, true, dim, client_preference));
       console.log("policy changed");
     }
