@@ -16,7 +16,7 @@ const MainPage = () => {
 
   const getModels = () => {
     axios
-      .get("http://127.0.0.1:8000/api/models")
+      .get("http://" + process.env.API_ENDPOINT + "/api/models")
       .then((response) => {
         // handle success
         response.data = response.data.map((item) => ({
@@ -33,7 +33,7 @@ const MainPage = () => {
   };
   const getTrainingData = ($model_id) => {
     axios
-      .get("http://127.0.0.1:8000/api/trainings/" + $model_id)
+      .get("http://" + process.env.API_ENDPOINT + "/api/trainings/" + $model_id)
       .then((response) => {
         // handle success
         setTrainingCycle(response.data);
@@ -66,7 +66,9 @@ const MainPage = () => {
   const getTrainingCycleDetailsData = ($training_cycle_id) => {
     axios
       .get(
-        "http://127.0.0.1:8000/api/trainings/" +
+        "http://" +
+          process.env.API_ENDPOINT +
+          "/api/trainings/" +
           $training_cycle_id +
           "/cycle_details/"
       )
