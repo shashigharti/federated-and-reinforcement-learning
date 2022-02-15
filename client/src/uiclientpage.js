@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 const { jStat } = require("jstat");
 import { argMax, simulate, actionAndUpdate } from "./common";
-import { ALL_UIOPTIONS } from "./data";
+import { META_DATA, ALL_UIOPTIONS } from "./data";
 import UIClient from "./components/uiclient";
 import ErrorBoundary from "./components/errorboundary";
 import { generatePolicies, clientPreferences } from "./common";
@@ -9,7 +9,10 @@ import { generatePolicies, clientPreferences } from "./common";
 const UIClientPage = () => {
   // Socket remote server
   const url =
-    "ws://" + process.env.API_ENDPOINT + "/fl-server/" + process.env.MODEL_NAME;
+    "ws://" +
+    process.env.API_ENDPOINT +
+    "/fl-server/" +
+    META_DATA[2].model_name;
   const dim = process.env.UICLIENT_DIM; // default 24
   const noOfClients = process.env.NO_OF_CLIENTS; // default 2
   const stopAfter = process.env.STOP_AFTER; // default 1000

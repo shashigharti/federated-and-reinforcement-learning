@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { processPlot } from "./common";
 import Plot from "react-plotly.js";
 import axios from "axios";
-import { BOOK_TYPES, OPTION_TYPES } from "./data";
+import { META_DATA, BOOK_TYPES, OPTION_TYPES } from "./data";
 
 const MainPage = () => {
   let [models, setModels] = useState([]);
@@ -21,8 +21,7 @@ const MainPage = () => {
         // handle success
         response.data = response.data.map((item) => ({
           ...item,
-          client_type:
-            item.model_name === "example_2" ? "ui-client" : "book-client",
+          client_type: META_DATA[item.id].base_url,
         }));
         setModels(response.data);
       })
@@ -31,7 +30,7 @@ const MainPage = () => {
         console.log(error);
       });
   };
-  const getTrainingData = ($model_id) => {
+  const getTrainingData = ($model_id, $model_url = "book-client") => {
     axios
       .get("http://" + process.env.API_ENDPOINT + "/api/trainings/" + $model_id)
       .then((response) => {
@@ -42,7 +41,7 @@ const MainPage = () => {
         // handle error
         console.log(error);
       });
-    setModelType($model_id == 2 ? "ui-client" : "book-client");
+    setModelType($model_url);
   };
 
   const handleSliderChange = ($slider_value) => {
@@ -129,7 +128,9 @@ const MainPage = () => {
                     <div>
                       <button
                         className='btn waves-effect waves-light'
-                        onClick={() => getTrainingData(model.id)}
+                        onClick={() =>
+                          getTrainingData(model.id, model.client_type)
+                        }
                       >
                         Trainings
                         <i className='material-icons right'>arrow_forward</i>
