@@ -23,6 +23,12 @@ Create virtual env for python and run the following commands:
 - Go to the folder server and install dependencies
   pip install -r requirements.php
 
+### Set ENV
+
+Go to path server > fl_server
+
+- Rename .env.sample file to .env
+
 ### Run Migrations
 
 - python manage.py makemigrations
@@ -36,13 +42,9 @@ Create virtual env for python and run the following commands:
 
 - python manage.py runserver
 
-### Set ENV
-
-- Rename .env.sample file to .env
-
 ## Frontend Server
 
-- Go to the folder client and install dependencies
+- Go to the client folder and install dependencies
   npm install
 
 ### Set ENV
