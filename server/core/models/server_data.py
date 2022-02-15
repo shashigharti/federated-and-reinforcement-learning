@@ -2,7 +2,7 @@ from django.db import models
 
 
 class ServerData(models.Model):
-    model_name = models.CharField(max_length=25)
+    model_name = models.CharField(max_length=25, unique=True)
     alphas = models.CharField(max_length=200, default="")
     betas = models.CharField(max_length=200, default="")
     options = models.IntegerField(default=0)
