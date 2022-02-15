@@ -5,7 +5,8 @@ import { argMax, processPlot, simulate, actionAndUpdate } from "./common";
 import { BOOKS, BOOK_TYPES } from "./data";
 
 const BookClientPage = () => {
-  const url = "ws://" + process.env.API_ENDPOINT + "/fl-server/example_1";
+  const url =
+    "ws://" + process.env.API_ENDPOINT + "/fl-server/" + process.env.MODEL_NAME;
   const dim = 3;
   const stopAfter = 400;
   const policies = [

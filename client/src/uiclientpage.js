@@ -8,7 +8,8 @@ import { generatePolicies, clientPreferences } from "./common";
 
 const UIClientPage = () => {
   // Socket remote server
-  const url = "ws://" + process.env.API_ENDPOINT + "/fl-server/example_2";
+  const url =
+    "ws://" + process.env.API_ENDPOINT + "/fl-server/" + process.env.MODEL_NAME;
   const dim = process.env.UICLIENT_DIM; // default 24
   const noOfClients = process.env.NO_OF_CLIENTS; // default 2
   const stopAfter = process.env.STOP_AFTER; // default 1000
