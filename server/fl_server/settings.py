@@ -18,6 +18,7 @@ import environ
 # Initialise environment variables
 env = environ.Env()
 environ.Env.read_env()
+END_POINT_LOCALHOST = env("END_POINT_LOCALHOST")
 END_POINT = env("END_POINT")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -64,8 +65,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
+    END_POINT_LOCALHOST,
+    END_POINT,
 ]
 
 ROOT_URLCONF = "fl_server.urls"
