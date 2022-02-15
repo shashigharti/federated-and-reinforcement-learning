@@ -12,7 +12,7 @@ const UIClientPage = () => {
     "ws://" +
     process.env.API_ENDPOINT +
     "/fl-server/" +
-    META_DATA[3].model_name;
+    META_DATA[2].model_name;
   const dim = process.env.UICLIENT_DIM; // default 24
   const noOfClients = process.env.NO_OF_CLIENTS; // default 2
   const stopAfter = process.env.STOP_AFTER; // default 1000
