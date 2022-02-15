@@ -9,25 +9,28 @@ import { generatePolicies, clientPreferences } from "./common";
 const UIClientPage = () => {
   // Socket remote server
   const url = "ws://" + process.env.API_ENDPOINT + "/fl-server/example_2";
-  const dim = process.env.UICLIENT_DIM; //default 24
-  const no_of_clients = process.env.NO_OF_CLIENTS; // default 2
+  const dim = process.env.UICLIENT_DIM; // default 24
+  const noOfClients = process.env.NO_OF_CLIENTS; // default 2
   const stopAfter = process.env.STOP_AFTER; // default 1000
+  const initProb = process.env.INIT_PROB; // default .7
+  const probAfterChange = process.env.PROB_AFTER_CHANGE; // default .7
   const updatePoliciesAfter = process.env.TIME_INTERVAL_FOR_POLICY_CHANGE; // update policies after 300 rounds
   const [policies, setPolicies] = useState([]);
   let [simulation, setSimulation] = useState(true);
   let [socket, setSocket] = useState(null);
+  let [allSelectedOptions, setAllSelectedOptions] = useState({});
 
   // Features/parameters that determine the users action
   let [alphasArray, setAlphasArray] = useState([]);
   let [betasArray, setBetasArray] = useState([]);
   let [policy, setPolicy] = useState([]);
-  let [reward, setReward] = useState([]);
   let [betaDistribution, setBetaDistribution] = useState([]);
   let [clientId, SetClientId] = useState(null);
   let [config, setConfig] = useState(ALL_UIOPTIONS[0]);
+  let [updateWeights, setUpdateWeights] = useState(false);
 
   // User options : 24 different ui design
-  const [uiOptions, setUIOptions] = useState(ALL_UIOPTIONS);
+  const [uiOptions] = useState(ALL_UIOPTIONS);
   const [cycle, setCycle] = useState(0);
   const [endCycle, setEndCycle] = useState(false);
   const [options, setOptions] = useState(0);
@@ -42,25 +45,62 @@ const UIClientPage = () => {
 
     // For each option find the probability using beta distribution
     for (let opt = 0; opt < alphasArray.length; opt++) {
-      // Get a beta distribution fro all alpha and beta pair
+      // Get a beta distribution for all alpha and beta pair
       samplesFromBetaDist[opt] = jStat.beta.sample(
         alphasArray[opt],
         betasArray[opt]
       );
     }
     setBetaDistribution(samplesFromBetaDist);
-    console.log("[Socket]Beta Distribution", samplesFromBetaDist);
+  };
 
-    if (samplesFromBetaDist.length > 0) {
+  useEffect(() => {
+    console.log("[Socket]Beta Distribution", betaDistribution);
+    console.log("[Socket]Policy", policy);
+    // setSelectedOption(argMax(betaDistribution));
+
+    if (betaDistribution.length > 0) {
       // Random selection of option from available ones
-      setSelectedOption(argMax(samplesFromBetaDist));
+      let selected_option = argMax(betaDistribution);
+      setSelectedOption(selected_option);
+      console.log("[Socket]New option selected:", selected_option);
+
+      // Set variable to trigger weight update
+      setUpdateWeights(true);
+    }
+  }, [betaDistribution]);
+
+  useEffect(() => {
+    // Change user display
+    setConfig(uiOptions[selectedOption]);
+
+    // Changed selected option
+    console.log("[Socket]Update selected option", selectedOption, config);
+
+    // Set variable to trigger weight update
+    setUpdateWeights(true);
+    let newval = 1;
+    if (selectedOption in allSelectedOptions) {
+      newval = allSelectedOptions[selectedOption] + 1;
     }
 
-    // If simulation is true, simulate the user action
-    if (simulation && cycle <= stopAfter) {
-      let new_reward = simulate(policy, selectedOption);
-      setReward(reward + new_reward);
+    setAllSelectedOptions({
+      ...allSelectedOptions,
+      [selectedOption]: newval,
+    });
+  }, [selectedOption]);
 
+  useEffect(() => {
+    console.log("All Selected Options", allSelectedOptions);
+  }, [allSelectedOptions]);
+
+  useEffect(() => {
+    // If simulation is true, simulate the user action
+    if (simulation && cycle <= stopAfter && updateWeights == true) {
+      console.log("[Socket]Simulate");
+
+      let new_reward = simulate(policy, selectedOption);
+      // setReward(reward + new_reward);
       let params = actionAndUpdate(
         alphasArray,
         betasArray,
@@ -80,11 +120,7 @@ const UIClientPage = () => {
         );
 
         // Send data to the server
-        console.log(
-          "[Socket]Sending new gradients to the server",
-          gradWeights[0].dataSync(),
-          gradWeights[1].dataSync()
-        );
+        console.log("[Socket]Sending new gradients to the server");
 
         socket.send(
           JSON.stringify({
@@ -96,45 +132,68 @@ const UIClientPage = () => {
           })
         );
       }
+      // Set variable to false to disable weight update
+      setUpdateWeights(false);
     }
-  };
+  }, [updateWeights]);
 
   useEffect(() => {
-    // set client preference to option 0
-    let client_preference = clientPreferences(no_of_clients, 0, 0.4);
-    setPolicies(generatePolicies(no_of_clients, true, dim, client_preference));
+    // Set client preference to option 0
+    let client_preference = clientPreferences(noOfClients, 0, initProb);
+    setPolicies(generatePolicies(noOfClients, true, dim, client_preference));
   }, []);
 
   useEffect(() => {
-    setSelectedOption(2);
     setOptions(Object.keys(uiOptions).length);
+    console.log("[Socket]Policies", policies);
   }, [policies]);
 
   useEffect(() => {
-    setConfig(uiOptions[selectedOption]);
-    console.log("Changed selected option", selectedOption, config);
-  }, [selectedOption]);
-
-  useEffect(() => {
-    setCycle(cycle + 1);
-    if (cycle == updatePoliciesAfter) {
-      // change client preference to option 5
-      let client_preference = clientPreferences(no_of_clients, 5, 0.8);
-      setPolicy(generatePolicies(no_of_clients, true, dim, client_preference));
-      console.log("policy changed");
+    if (endCycle == true) {
+      setCycle(cycle + 1);
+      console.log("[Socket]New cycle", cycle);
     }
-    console.log("cycle", cycle);
   }, [endCycle]);
 
-  // Take initial action on params receive from the server
+  const findHighestValue = (obj) => {
+    const arr = Object.keys(obj).map((el) => {
+      return obj[el];
+    });
+    arr.sort((a, b) => {
+      return a - b;
+    });
+
+    let second_highest_value = arr[arr.length - 2];
+    console.log("Second highest value", second_highest_value);
+
+    for (let i = 1; i < arr.length; i++) {
+      if (obj[i] == second_highest_value) {
+        return i;
+      }
+    }
+    return false;
+  };
+
   useEffect(() => {
-    if (
-      (alphasArray.length == betasArray.length &&
-        policy.length > 0 &&
-        cycle == 1) ||
-      endCycle
-    ) {
-      console.log("[Socket] policy", policy);
+    if (cycle == updatePoliciesAfter) {
+      // Find the option with the second highest value
+      let highestValueIndex = 2; //findHighestValue(allSelectedOptions);
+      console.log("Highest Value Index:", highestValueIndex);
+
+      // Change client preference to option highestValueIndex
+      let client_preference = clientPreferences(
+        noOfClients,
+        highestValueIndex,
+        probAfterChange
+      );
+      setPolicies(generatePolicies(noOfClients, true, dim, client_preference));
+    }
+  }, [cycle]);
+
+  // Take initial action on weights received from the server
+  useEffect(() => {
+    if ((alphasArray.length == betasArray.length && cycle == 0) || endCycle) {
+      console.log("[Socket]Set end cycle to false");
       setEndCycle(false);
       selectSample();
     }
@@ -142,27 +201,31 @@ const UIClientPage = () => {
 
   useEffect(() => {
     if (options == 0) return;
-
     setSocket(new WebSocket(url));
   }, [options]);
 
   useEffect(() => {
-    console.log("clientId", clientId);
+    let clientId = Math.floor(Math.random() * noOfClients);
+    SetClientId(clientId);
+  }, [policies]);
+
+  // Set local policy
+  useEffect(() => {
+    console.log("[Socket]ClientId", clientId);
+    console.log("[Socket]Policies", policies);
     if (clientId != null && policies != null) {
       let local_policy = policies[clientId];
-      console.log("[Socket]Selected Policy:", local_policy, policies);
       setPolicy(local_policy);
+      console.log("[Socket]Selected Local Policy:", local_policy);
     }
   }, [clientId, policies]);
 
   useEffect(() => {
-    if (socket == null) return;
+    if (socket == null || clientId == null) return;
 
     // Get params from server
     socket.onopen = (message) => {
       console.log("[Socket]Connecton Established");
-      let clientId = Math.floor(Math.random() * no_of_clients);
-      SetClientId(clientId);
       socket.send(
         JSON.stringify({
           event: "connected", // 0 ->  alphas
@@ -200,12 +263,11 @@ const UIClientPage = () => {
         }
       } else if (message_from_server["type"] == "new_weights") {
         console.log(
-          "[Socket]New Weights",
+          "************* [Socket]Received New Weights & Cycle ********************",
           message_from_server.params["al"],
           message_from_server.params["bt"],
           message_from_server.params["cycle"]
         );
-        setCycle(message_from_server.params["cycle"]);
         setEndCycle(true);
         setAlphasArray(message_from_server.params["al"]);
         setBetasArray(message_from_server.params["bt"]);

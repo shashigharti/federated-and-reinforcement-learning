@@ -9,6 +9,8 @@ class Simulator {
     this.action_space = Array(rates.length);
   }
   simulate(idx) {
+    console.log("Rates", this.rates);
+    console.log("Rate", this.rates[idx]);
     let choice = binomial_sample(this.rates[idx]);
     return choice;
   }
@@ -100,9 +102,7 @@ const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
   let rewardVector = Array(alphasArray.length).fill(0);
   let sampledVector = Array(alphasArray.length).fill(0);
   console.log(
-    "Action update selectedoption reward",
-    alphasArray,
-    betasArray,
+    "[Socket]Update selected option and reward",
     selectedOption,
     reward
   );
@@ -180,7 +180,7 @@ const generatePolicies = (
  * @param {number} no_of_clients
  * @returns
  */
-let clientPreferences = (no_of_clients, index, prob = 0.3) => {
+let clientPreferences = (no_of_clients, index, prob = 0.7) => {
   return Array(no_of_clients)
     .fill()
     .map(
