@@ -28,7 +28,7 @@
     {
       "model": "core.serverdata",
       "fields": {
-        "model_name": "example_2",
+        "model_name": "example_3",
         "alphas": "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",
         "betas": "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",    
         "options": 24,
