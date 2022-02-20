@@ -57,7 +57,6 @@ def create_training_cycle_details(pdata):
 
 class FlConsumer(AsyncJsonWebsocketConsumer):
     weights = {}
-    cycle = 0
     clients = {}
     mode = "registration"  # registration|training|avg
     isCycleEnd = False
@@ -85,7 +84,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                 "dim": dim,
                 "max_workers": max_workers,
             }
-            self.clients[self.room_group_name] = {"ids": [], "weights": {}}
+            self.clients[self.room_group_name] = {"ids": [], "weights": {}, "cycle": 0}
 
         print(
             "[Socket] Model Details:{}".format(
@@ -183,6 +182,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         )
 
         elif event == "update":
+            print("[Socket] Cycle => {}".format(self.cycle))
             print("[Socket] Data received: {}".format(text_data))
             print("[Socket] Got weights from client: {}".format(client_id))
 
@@ -267,7 +267,9 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         [str(al) for al in self.weights[self.room_group_name]["betas"]]
                     )
                     pdata["cycle_status"] = "inactive"
-                    pdata["rounds"] = self.cycle
+                    pdata["rounds"] = self.clients[self.room_group_name][
+                        "cycle"
+                    ]  # self.cycle
 
                     # Update training data
                     await update_training(self.global_training_cycle_id, pdata)
@@ -292,7 +294,9 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         "params": {
                             "al": self.weights[self.room_group_name]["alphas"],
                             "bt": self.weights[self.room_group_name]["betas"],
-                            "cycle": self.cycle,
+                            "cycle": self.clients[self.room_group_name][
+                                "cycle"
+                            ],  # self.cycle,
                         },
                     },
                 }
@@ -309,11 +313,15 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                 response_to_user,
             )
             if self.isCycleEnd:
-                print("Cycle {} - End of cycle".format(self.cycle))
-                self.cycle = self.cycle + 1
+                print(
+                    "Cycle {} - End of cycle".format(
+                        self.clients[self.room_group_name]["cycle"]
+                    )
+                )
+                self.clients[self.room_group_name]["cycle"] += 1
             print(
                 "\n\n[Socket] ************** Cycle: {}  **************".format(
-                    self.cycle
+                    self.clients[self.room_group_name]["cycle"]
                 )
             )
 

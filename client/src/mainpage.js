@@ -60,6 +60,7 @@ const MainPage = () => {
     betas = betas.map(function (x) {
       return parseFloat(x, 10);
     });
+
     if (modelType == "ui-client") {
       setPlotData(processPlot(alphas, betas, OPTION_TYPES));
     } else {
@@ -88,7 +89,6 @@ const MainPage = () => {
 
   useEffect(() => {
     handleSliderChange(1);
-    console.log(training_cycle_details);
   }, [training_cycle_details]);
 
   useEffect(() => {
@@ -143,7 +143,10 @@ const MainPage = () => {
                       <button
                         className='btn waves-effect waves-light'
                         onClick={() =>
-                          getTrainingData(model.id, model.client_type)
+                          getTrainingData(
+                            model.id,
+                            META_DATA[model.id].base_url
+                          )
                         }
                       >
                         Trainings
