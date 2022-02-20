@@ -21,6 +21,7 @@ module.exports = (env, argv) => ({
   mode: argv.mode,
   entry: ["regenerator-runtime/runtime", "./index.js"],
   output: {
+    publicPath: "/",
     path: path.join(__dirname, "/dist"),
     filename: "index.bundle.js",
   },

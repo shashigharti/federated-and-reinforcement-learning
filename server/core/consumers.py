@@ -148,7 +148,9 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                                     "al": self.weights[self.room_group_name]["alphas"],
                                     "bt": self.weights[self.room_group_name]["betas"],
                                     "dim": self.weights[self.room_group_name]["dim"],
-                                    "cycle": self.cycle,
+                                    "max_workers": self.weights[self.room_group_name][
+                                        "max_workers"
+                                    ],
                                 },
                             },
                         }

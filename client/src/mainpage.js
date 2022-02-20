@@ -21,7 +21,9 @@ const MainPage = () => {
         // handle success
         response.data = response.data.map((item) => ({
           ...item,
-          client_type: META_DATA[item.id].base_url,
+          client_type: META_DATA[item.id].has_nested_route
+            ? META_DATA[item.id].base_url + "/" + item.id
+            : META_DATA[item.id].base_url,
         }));
         setModels(response.data);
       })

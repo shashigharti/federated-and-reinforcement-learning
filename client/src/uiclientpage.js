@@ -5,16 +5,18 @@ import { META_DATA, ALL_UIOPTIONS } from "./data";
 import UIClient from "./components/uiclient";
 import ErrorBoundary from "./components/errorboundary";
 import { generatePolicies, clientPreferences } from "./common";
+import { useParams } from "react-router-dom";
 
 const UIClientPage = () => {
+  const { id } = useParams();
   // Socket remote server
   const url =
     "ws://" +
     process.env.API_ENDPOINT +
     "/fl-server/" +
-    META_DATA[2].model_name;
-  const dim = process.env.UICLIENT_DIM; // default 24
-  const noOfClients = process.env.NO_OF_CLIENTS; // default 2
+    META_DATA[id].model_name;
+  const dim = META_DATA[id].dim;
+  const noOfClients = META_DATA[id].no_of_clients;
   const stopAfter = process.env.STOP_AFTER; // default 1000
   const initProb = process.env.INIT_PROB; // default .7
   const probAfterChange = process.env.PROB_AFTER_CHANGE; // default .7
@@ -132,7 +134,7 @@ const UIClientPage = () => {
             alphas: gradWeights[0].dataSync(), // 1 ->  alphas
             betas: gradWeights[1].dataSync(), // 2 -> betas
             client_id: clientId,
-            model_name: "example_2",
+            model_name: "example_" + id,
           })
         );
       }
@@ -142,7 +144,6 @@ const UIClientPage = () => {
   }, [updateWeights]);
 
   useEffect(() => {
-    // Set client preference to option 0
     let client_preference = clientPreferences(noOfClients, 0, initProb);
     setPolicies(generatePolicies(noOfClients, true, dim, client_preference));
   }, []);
@@ -210,6 +211,7 @@ const UIClientPage = () => {
 
   useEffect(() => {
     let clientId = Math.floor(Math.random() * noOfClients);
+    console.log("Policies Set and Random Client Selected", clientId);
     SetClientId(clientId);
   }, [policies]);
 
@@ -234,7 +236,7 @@ const UIClientPage = () => {
         JSON.stringify({
           event: "connected", // 0 ->  alphas
           client_id: clientId,
-          model_name: "example_2",
+          model_name: "example_" + id,
         })
       );
     };
@@ -248,18 +250,19 @@ const UIClientPage = () => {
       // Sets params with the value received from the server
       if (message_from_server["type"] == "init-params") {
         dim_from_server = message_from_server.params["dim"];
+        no_of_clients = message_from_server.params["max_workers"];
 
         // Set the values
-        if (dim_from_server == dim) {
+        if (dim_from_server == dim && noOfClients == no_of_clients) {
           console.log("[Socket]Valid dimension");
 
           console.log(
             "[Socket]INIT - Received aplhas betas dim policy",
             message_from_server.params["al"],
             message_from_server.params["bt"],
-            dim_from_server
+            dim_from_server,
+            message_from_server.params["max_workers"]
           );
-
           setAlphasArray(message_from_server.params["al"]);
           setBetasArray(message_from_server.params["bt"]);
         } else {
@@ -270,7 +273,8 @@ const UIClientPage = () => {
           "************* [Socket]Received New Weights & Cycle ********************",
           message_from_server.params["al"],
           message_from_server.params["bt"],
-          message_from_server.params["cycle"]
+          message_from_server.params["max_workers"],
+          message_from_server.params["dim"]
         );
         setEndCycle(true);
         setAlphasArray(message_from_server.params["al"]);
