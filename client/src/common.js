@@ -9,8 +9,8 @@ class Simulator {
     this.action_space = Array(rates.length);
   }
   simulate(idx) {
-    console.log("Rates", this.rates);
-    console.log("Rate", this.rates[idx]);
+    console.log("[Socket]Rates", this.rates);
+    console.log("[Socket]Rate", this.rates[idx]);
     let choice = binomial_sample(this.rates[idx]);
     return choice;
   }
@@ -140,6 +140,7 @@ const actionAndUpdate = (alphasArray, betasArray, selectedOption, reward) => {
  */
 const generateProbabilities = (dim, preference) => {
   let probabilities = [];
+  console.log("preference", preference);
 
   let prob_for_remaining = (1 - preference[0]) / dim;
   for (let i = 0; i < dim; i++) {
@@ -157,20 +158,11 @@ const generateProbabilities = (dim, preference) => {
  * @param {number} no_of_clients
  * @returns {Array}
  */
-const generatePolicies = (
-  no_of_clients,
-  samePolicy = true,
-  dim = 24,
-  client_preferences
-) => {
+const generatePolicies = (no_of_clients, dim = 24, client_preferences) => {
   let policies = [];
-  let policy = generateProbabilities(dim, client_preferences[0]);
-
-  for (let step = 0; step < no_of_clients; step++) {
+  for (let i = 0; i < no_of_clients; i++) {
+    let policy = generateProbabilities(dim, client_preferences[i]);
     policies.push(policy);
-    if (samePolicy != true) {
-      policy = generateProbabilities(dim, client_preferences[step]);
-    }
   }
   return policies;
 };
@@ -180,18 +172,21 @@ const generatePolicies = (
  * @param {number} no_of_clients
  * @returns
  */
-let clientPreferences = (no_of_clients, index, prob = 0.7) => {
+let clientPreferences = (
+  no_of_clients,
+  index,
+  change_prob_idxs,
+  change_probs
+) => {
   return Array(no_of_clients)
     .fill()
     .map(
       function (x, i) {
-        if (this.samePolicy == true) {
-          return [prob, this.idx];
-        }
-        return [prob, i];
+        return [this.probs[i][this.idx], this.probIdxs[i][this.idx]];
       },
       {
-        samePolicy: true,
+        probIdxs: change_prob_idxs,
+        probs: change_probs,
         idx: index,
       }
     );

@@ -47,6 +47,8 @@ const MainPage = () => {
   };
 
   const handleSliderChange = ($slider_value) => {
+    if (training_cycle_details.length <= 0) return;
+
     setValue($slider_value);
     let params = JSON.parse(training_cycle_details[$slider_value]["params"]);
     let alphas, betas;
@@ -64,6 +66,7 @@ const MainPage = () => {
       setPlotData(processPlot(alphas, betas, BOOK_TYPES));
     }
   };
+
   const getTrainingCycleDetailsData = ($training_cycle_id) => {
     axios
       .get(
@@ -84,19 +87,26 @@ const MainPage = () => {
   };
 
   useEffect(() => {
+    handleSliderChange(1);
+    console.log(training_cycle_details);
+  }, [training_cycle_details]);
+
+  useEffect(() => {
     getModels();
   }, []);
   return (
     <>
       {/* <TabMenu /> */}
       <div className='row'>
-        <div className='col s12 m6'>
+        <div className='col s12 m12'>
           <h2> Models </h2>
           <table>
             <thead>
               <tr>
                 <th>Id</th>
-                <th>Model Name</th>
+                <th>Model Id</th>
+                <th>Model Title</th>
+                <th>Model Description</th>
                 <th>Alphas</th>
                 <th>Betas</th>
                 <th>Status</th>
@@ -109,6 +119,8 @@ const MainPage = () => {
               {models.map((model) => (
                 <tr key={model.id}>
                   <td>{model.id}</td>
+                  <td>{META_DATA[model.id].base_url}</td>
+                  <td>{META_DATA[model.id].description}</td>
                   <td>{model.model_name}</td>
                   <td>{model.alphas}</td>
                   <td>{model.betas}</td>
@@ -144,7 +156,7 @@ const MainPage = () => {
             </tbody>
           </table>
         </div>
-        <div className='col s12 m6'>
+        <div className='col s12 m12'>
           <h2> Training Cycle </h2>
           <table>
             <thead>
@@ -191,7 +203,7 @@ const MainPage = () => {
         </div>
       </div>
       <div className='row'>
-        <div className='col s12 m12'>
+        <div className='col s6 m6'>
           <h2>Plot</h2>
           <Plot data={plotdata} layout={{ title: "Distribution Plot" }} />
           <input

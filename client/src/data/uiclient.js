@@ -43,6 +43,7 @@ const ALL_UIOPTIONS = [
     buttonColor,
   }));
 
+// Generate option labels for plot
 const OPTION_TYPES = Object.keys(ALL_UIOPTIONS).map(function (key, index) {
   return `uioption - ${key}`;
 });

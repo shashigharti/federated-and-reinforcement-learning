@@ -15,12 +15,15 @@ const UIClientPage = () => {
     process.env.API_ENDPOINT +
     "/fl-server/" +
     META_DATA[id].model_name;
+
   const dim = META_DATA[id].dim;
   const noOfClients = META_DATA[id].no_of_clients;
   const stopAfter = process.env.STOP_AFTER; // default 1000
-  const initProb = process.env.INIT_PROB; // default .7
-  const probAfterChange = process.env.PROB_AFTER_CHANGE; // default .7
-  const updatePoliciesAfter = process.env.TIME_INTERVAL_FOR_POLICY_CHANGE; // update policies after 300 rounds
+  // const initProb = process.env.INIT_PROB; // default .7
+  // const probAfterChange = process.env.PROB_AFTER_CHANGE; // default .7
+  const updatePoliciesAfter = META_DATA[id].time_interval_for_policy_change; // time interval for policy change
+  const changePolicy = META_DATA[id].change_policy;
+  const [probIdx, setProbIdx] = useState(0);
   const [policies, setPolicies] = useState([]);
   let [simulation, setSimulation] = useState(true);
   let [socket, setSocket] = useState(null);
@@ -144,8 +147,14 @@ const UIClientPage = () => {
   }, [updateWeights]);
 
   useEffect(() => {
-    let client_preference = clientPreferences(noOfClients, 0, initProb);
-    setPolicies(generatePolicies(noOfClients, true, dim, client_preference));
+    let client_preferences = clientPreferences(
+      noOfClients,
+      probIdx,
+      META_DATA[id].change_prob_idxs,
+      META_DATA[id].change_probs
+    );
+    console.log("[Socket]Client Preference", client_preferences);
+    setPolicies(generatePolicies(noOfClients, dim, client_preferences));
   }, []);
 
   useEffect(() => {
@@ -157,41 +166,26 @@ const UIClientPage = () => {
     if (endCycle == true) {
       setCycle(cycle + 1);
       console.log("[Socket]New cycle", cycle);
+      console.log("[Socket]Client Id", clientId);
     }
   }, [endCycle]);
 
-  const findHighestValue = (obj) => {
-    const arr = Object.keys(obj).map((el) => {
-      return obj[el];
-    });
-    arr.sort((a, b) => {
-      return a - b;
-    });
-
-    let second_highest_value = arr[arr.length - 2];
-    console.log("Second highest value", second_highest_value);
-
-    for (let i = 1; i < arr.length; i++) {
-      if (obj[i] == second_highest_value) {
-        return i;
-      }
-    }
-    return false;
-  };
+  useEffect(() => {
+    // Change client preference to option highestValueIndex
+    let client_preferences = clientPreferences(
+      noOfClients,
+      probIdx,
+      META_DATA[id].change_prob_idxs,
+      META_DATA[id].change_probs
+    );
+    setPolicies(generatePolicies(noOfClients, dim, client_preferences));
+  }, [probIdx]);
 
   useEffect(() => {
-    if (cycle == updatePoliciesAfter) {
-      // Find the option with the second highest value
-      let highestValueIndex = 2; //findHighestValue(allSelectedOptions);
-      console.log("Highest Value Index:", highestValueIndex);
-
-      // Change client preference to option highestValueIndex
-      let client_preference = clientPreferences(
-        noOfClients,
-        highestValueIndex,
-        probAfterChange
-      );
-      setPolicies(generatePolicies(noOfClients, true, dim, client_preference));
+    if (changePolicy == true && cycle == updatePoliciesAfter) {
+      console.log("[Socket]Policy Changed", changePolicy);
+      console.log("[Socket]Policies", policies);
+      setProbIdx(probIdx + 1);
     }
   }, [cycle]);
 
@@ -210,15 +204,15 @@ const UIClientPage = () => {
   }, [options]);
 
   useEffect(() => {
-    let clientId = Math.floor(Math.random() * noOfClients);
-    console.log("Policies Set and Random Client Selected", clientId);
-    SetClientId(clientId);
+    if (clientId == null) {
+      let clientId = Math.floor(Math.random() * noOfClients);
+      SetClientId(clientId);
+      console.log("[Socket]ClientId: ", clientId);
+    }
   }, [policies]);
 
   // Set local policy
   useEffect(() => {
-    console.log("[Socket]ClientId", clientId);
-    console.log("[Socket]Policies", policies);
     if (clientId != null && policies != null) {
       let local_policy = policies[clientId];
       setPolicy(local_policy);
@@ -244,7 +238,8 @@ const UIClientPage = () => {
     // Handle message received from server
     socket.onmessage = (event) => {
       const message_from_server = JSON.parse(event.data);
-      let dim_from_server = null;
+      let dim_from_server = null,
+        no_of_clients = null;
       console.log("[Socket]Message Received", message_from_server);
 
       // Sets params with the value received from the server
@@ -273,8 +268,7 @@ const UIClientPage = () => {
           "************* [Socket]Received New Weights & Cycle ********************",
           message_from_server.params["al"],
           message_from_server.params["bt"],
-          message_from_server.params["max_workers"],
-          message_from_server.params["dim"]
+          message_from_server.params["cycle"]
         );
         setEndCycle(true);
         setAlphasArray(message_from_server.params["al"]);
