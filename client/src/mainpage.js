@@ -16,7 +16,7 @@ const MainPage = () => {
 
   const getModels = () => {
     axios
-      .get("http://" + process.env.API_ENDPOINT + "/api/models")
+      .get(process.env.API_ENDPOINT + "/api/models")
       .then((response) => {
         // handle success
         response.data = response.data.map((item) => ({
@@ -34,7 +34,7 @@ const MainPage = () => {
   };
   const getTrainingData = ($model_id, $model_url = "book-client") => {
     axios
-      .get("http://" + process.env.API_ENDPOINT + "/api/trainings/" + $model_id)
+      .get(process.env.API_ENDPOINT + "/api/trainings/" + $model_id)
       .then((response) => {
         // handle success
         setTrainingCycle(response.data);
@@ -71,8 +71,7 @@ const MainPage = () => {
   const getTrainingCycleDetailsData = ($training_cycle_id) => {
     axios
       .get(
-        "http://" +
-          process.env.API_ENDPOINT +
+        process.env.API_ENDPOINT +
           "/api/trainings/" +
           $training_cycle_id +
           "/cycle_details/"

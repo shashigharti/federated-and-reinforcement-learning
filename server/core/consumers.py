@@ -182,7 +182,11 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         )
 
         elif event == "update":
-            print("[Socket] Cycle => {}".format(self.cycle))
+            print(
+                "[Socket] Cycle => {}".format(
+                    self.clients[self.room_group_name]["cycle"]
+                )
+            )
             print("[Socket] Data received: {}".format(text_data))
             print("[Socket] Got weights from client: {}".format(client_id))
 
@@ -212,7 +216,11 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
             ):
                 self.mode == "avg"
 
-                print("\n[Socket] **** Averaging Weights ****".format(self.cycle))
+                print(
+                    "\n[Socket] **** Averaging Weights ****".format(
+                        self.clients[self.room_group_name]["cycle"]
+                    )
+                )
                 print(
                     "[Socket] Workers Weights(Gradients):",
                     self.clients[self.room_group_name]["weights"],

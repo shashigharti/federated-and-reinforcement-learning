@@ -13,7 +13,7 @@ const META_DATA = {
     no_of_clients: 1,
     dim: 24,
     model_name: "example_2",
-    description: "Single client; without preference change while training",
+    description: "Single client; No preference change",
     has_nested_route: "true",
     change_policy: false,
     change_prob_idxs: { 0: [0] }, // indexes for probability value change
@@ -24,8 +24,7 @@ const META_DATA = {
     no_of_clients: 1,
     dim: 24,
     model_name: "example_3",
-    description:
-      "Single client; change preference in the middle of the training",
+    description: "(Drift)Single client; Change preference during training",
     has_nested_route: "true",
     change_policy: true,
     change_prob_idxs: { 0: [0, 2] }, // indexes for probability value change
@@ -38,7 +37,7 @@ const META_DATA = {
     dim: 24,
     model_name: "example_4",
     description:
-      "Multiple clients with different preferences; without preference change while training",
+      "(Diff)Multiple clients with different preferences; No preference change",
     has_nested_route: "true",
     change_policy: false,
     change_prob_idxs: { 0: [0], 1: [1] }, // indexes for probability value change
@@ -50,7 +49,7 @@ const META_DATA = {
     dim: 24,
     model_name: "example_5",
     description:
-      "Multiple clients with different preferences; change preference of first client while training",
+      "(Drift and Diff)Multiple clients with different preferences; Change preference of first client while training",
     has_nested_route: "true",
     change_policy: true,
     change_prob_idxs: { 0: [0, 4], 1: [1, 1] }, // indexes for probability value change
