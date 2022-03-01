@@ -17,60 +17,65 @@ const envKeys = Object.keys(env).reduce((prev, next) => {
   return prev;
 }, {});
 
-module.exports = (env, argv) => ({
-  mode: argv.mode,
-  entry: ["regenerator-runtime/runtime", "./index.js"],
-  output: {
-    publicPath: "/",
-    path: path.join(__dirname, "/dist"),
-    filename: "index.bundle.js",
-  },
-  devtool: argv.mode === "development" ? "eval-source-map" : "source-map",
-  devServer: {
-    port: 8080,
-    hot: true,
-    open: true,
-    stats: {
-      children: false, // Hide children information
-      maxModules: 0, // Set the maximum number of modules to be shown
+module.exports = () => {
+  console.log(env.API_ENDPOINT);
+  return {
+    mode: env.MODE,
+    entry: ["regenerator-runtime/runtime", "./index.js"],
+    output: {
+      publicPath: "/",
+      path: path.join(__dirname, "/dist"),
+      filename: "index.bundle.js",
     },
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader",
-          options: {
-            presets: ["@babel/preset-env", "@babel/preset-react"],
-            plugins: ["@babel/plugin-proposal-class-properties"],
-          },
-        },
+    devtool: env.MODE === "development" ? "eval-source-map" : "source-map",
+    devServer: {
+      hot: true,
+      open: true,
+      stats: {
+        children: false, // Hide children information
+        maxModules: 0, // Set the maximum number of modules to be shown
       },
-      {
-        test: /\.svg$/,
-        use: [
-          {
-            loader: "svg-url-loader",
+    },
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: {
+            loader: "babel-loader",
             options: {
-              limit: 10000,
+              presets: ["@babel/preset-env", "@babel/preset-react"],
+              plugins: ["@babel/plugin-proposal-class-properties"],
             },
           },
-        ],
-      },
+        },
+        {
+          test: /\.svg$/,
+          use: [
+            {
+              loader: "svg-url-loader",
+              options: {
+                limit: 10000,
+              },
+            },
+          ],
+        },
+      ],
+    },
+    plugins: [
+      new HtmlWebpackPlugin({ template: "./index.html" }),
+      new webpack.DefinePlugin(envKeys),
     ],
-  },
-  plugins: [
-    new HtmlWebpackPlugin({ template: "./index.html" }),
-    new webpack.DefinePlugin(envKeys),
-  ],
-  externals: {
-    "@tensorflow/tfjs-core": "tf",
-  },
-  devServer: {
-    historyApiFallback: true,
-    contentBase: "./",
-    hot: true,
-  },
-});
+    externals: {
+      "@tensorflow/tfjs-core": "tf",
+    },
+    devServer: {
+      historyApiFallback: true,
+      proxy: {
+        "/api": env.API_ENDPOINT,
+      },
+      contentBase: "./",
+      hot: true,
+    },
+  };
+};
