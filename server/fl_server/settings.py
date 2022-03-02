@@ -36,7 +36,7 @@ SECRET_KEY = "django-insecure-e!o=z18%hhi(7c-=h8(h5wr(!e9^7r&d5!mreswv6$!l6i1v69
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
@@ -56,18 +56,18 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    END_POINT_LOCALHOST,
-    END_POINT,
-]
+# CORS_ALLOWED_ORIGINS = [
+#     END_POINT_LOCALHOST,
+#     END_POINT,
+# ]
 
 ROOT_URLCONF = "fl_server.urls"
 

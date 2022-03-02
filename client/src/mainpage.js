@@ -13,10 +13,13 @@ const MainPage = () => {
   const [maxvalue, setMaxValue] = React.useState(500);
   const [value, setValue] = React.useState(0);
   const [modelType, setModelType] = React.useState("");
+  let config = {
+    //headers: { "Access-Control-Allow-Origin": "*" },
+  };
 
   const getModels = () => {
     axios
-      .get(process.env.API_ENDPOINT + "/api/models")
+      .get(process.env.API_ENDPOINT + "/api/models", config)
       .then((response) => {
         // handle success
         response.data = response.data.map((item) => ({
@@ -34,7 +37,7 @@ const MainPage = () => {
   };
   const getTrainingData = ($model_id, $model_url = "book-client") => {
     axios
-      .get(process.env.API_ENDPOINT + "/api/trainings/" + $model_id)
+      .get(process.env.API_ENDPOINT + "/api/trainings/" + $model_id, config)
       .then((response) => {
         // handle success
         setTrainingCycle(response.data);
@@ -74,7 +77,8 @@ const MainPage = () => {
         process.env.API_ENDPOINT +
           "/api/trainings/" +
           $training_cycle_id +
-          "/cycle_details/"
+          "/cycle_details/",
+        config
       )
       .then((response) => {
         setMaxValue(response.data.length);

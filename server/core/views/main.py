@@ -8,6 +8,7 @@ from core.serializers import (
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
+from rest_framework.response import Response
 
 
 @api_view(["GET"])
@@ -32,7 +33,8 @@ def model_list(request):
     serverdata_list = ServerDataSerializer(
         ServerData.objects.order_by("created_at"), many=True
     )
-    return JsonResponse(serverdata_list.data, safe=False, status=201)
+    # return JsonResponse(serverdata_list.data, safe=False, status=201)
+    return Response(serverdata_list.data)
 
 
 @api_view(
