@@ -1,31 +1,3 @@
-const COLORS = {
-  0: "red",
-  1: "blue",
-  2: "aqua",
-  3: "aquamarine",
-  4: "green",
-  5: "fuchsia",
-  6: "darkkhaki",
-  7: "darksalmon",
-  8: "darkseagreen",
-  9: "lightblue",
-  10: "lightskyblue",
-  11: "lightyellow",
-  12: "pink",
-  13: "lightsteelblue",
-  14: "mintcream",
-  15: "lightseagreen",
-  16: "greenyellow",
-  17: "lavenderblush",
-  18: "realiceblued",
-  19: "lightslategray",
-  20: "palevioletred",
-  21: "springgreen",
-  22: "antiquewhite",
-  23: "teal",
-  24: "lightgoldenrodyellow",
-};
-
 // All possible UI options
 const ALL_UIOPTIONS = [
   ["black", "gradient"], // heroBackground
@@ -48,4 +20,4 @@ const OPTION_TYPES = Object.keys(ALL_UIOPTIONS).map(function (key, index) {
   return `uioption - ${key}`;
 });
 
-export { COLORS, ALL_UIOPTIONS, OPTION_TYPES };
+export { ALL_UIOPTIONS, OPTION_TYPES };

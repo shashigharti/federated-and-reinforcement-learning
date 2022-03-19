@@ -12,20 +12,18 @@ const UIClientPage = () => {
   // Socket remote server
   const url =
     "ws://" +
-    process.env.API_ENDPOINT +
+    process.env.WS_ENDPOINT +
     "/fl-server/" +
     META_DATA[id].model_name;
 
   const dim = META_DATA[id].dim;
   const noOfClients = META_DATA[id].no_of_clients;
   const stopAfter = process.env.STOP_AFTER; // default 1000
-  // const initProb = process.env.INIT_PROB; // default .7
-  // const probAfterChange = process.env.PROB_AFTER_CHANGE; // default .7
   const updatePoliciesAfter = META_DATA[id].time_interval_for_policy_change; // time interval for policy change
   const changePolicy = META_DATA[id].change_policy;
   const [probIdx, setProbIdx] = useState(0);
   const [policies, setPolicies] = useState([]);
-  let [simulation, setSimulation] = useState(true);
+  let [simulation, setSimulation] = useState(process.env.SIMULATION);
   let [socket, setSocket] = useState(null);
   let [allSelectedOptions, setAllSelectedOptions] = useState({});
 
@@ -44,6 +42,23 @@ const UIClientPage = () => {
   const [endCycle, setEndCycle] = useState(false);
   const [options, setOptions] = useState(0);
   const [selectedOption, setSelectedOption] = useState(0);
+
+  let userActionPromiseResolve; // stores the reference to resolve function for user action
+  const userActionPromise = new Promise((resolve) => {
+    userActionPromiseResolve = resolve;
+  });
+
+  // When the user clicks the button...
+  const submitPositiveResult = (e) => {
+    console.log("[Socket]User clicked");
+    userActionPromiseResolve(true);
+  };
+
+  // When the user doesn't click the button...
+  const submitNegativeResult = (e) => {
+    console.log("[Socket]Did not Click");
+    userActionPromiseResolve(false);
+  };
 
   /**
    * Choose the best option(with highest reward probability) among other various options;
@@ -100,16 +115,27 @@ const UIClientPage = () => {
   }, [selectedOption]);
 
   useEffect(() => {
-    console.log("All Selected Options", allSelectedOptions);
+    console.log("[Socket]All Selected Options", allSelectedOptions);
   }, [allSelectedOptions]);
 
   useEffect(() => {
-    // If simulation is true, simulate the user action
-    if (simulation && cycle <= stopAfter && updateWeights == true) {
-      console.log("[Socket]Simulate");
+    async function updateNewWeights() {
+      let new_reward;
 
-      let new_reward = simulate(policy, selectedOption);
-      // setReward(reward + new_reward);
+      // If simulation is true, simulate the user action
+      if (simulation == true && cycle <= stopAfter && updateWeights == true) {
+        console.log("[Socket]Simulate", simulation);
+        new_reward = simulate(policy, selectedOption);
+      } else {
+        console.log("[Socket]Simulate", simulation);
+        // When the user clicks the button...
+        // Wait on user input...
+        const clicked = await userActionPromise;
+
+        // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
+        new_reward = clicked ? 1 : 0;
+      }
+
       let params = actionAndUpdate(
         alphasArray,
         betasArray,
@@ -118,9 +144,8 @@ const UIClientPage = () => {
       );
 
       if (params) {
-        let gradWeights, alphas_betas;
+        let gradWeights;
         gradWeights = params[0];
-        alphas_betas = params[1];
 
         console.log(
           "[Socket]Diff: alphas and betas",
@@ -144,6 +169,7 @@ const UIClientPage = () => {
       // Set variable to false to disable weight update
       setUpdateWeights(false);
     }
+    updateNewWeights();
   }, [updateWeights]);
 
   useEffect(() => {
@@ -155,6 +181,15 @@ const UIClientPage = () => {
     );
     console.log("[Socket]Client Preference", client_preferences);
     setPolicies(generatePolicies(noOfClients, dim, client_preferences));
+
+    // When the user doesn't make a decision for 20 seconds, closes the window, or presses X... send a negative result
+    const timer = setTimeout(submitNegativeResult, 20000);
+    window.addEventListener("beforeunload", submitNegativeResult);
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "KeyX") submitNegativeResult();
+    });
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -281,7 +316,10 @@ const UIClientPage = () => {
     <>
       <div id='main'>
         <ErrorBoundary>
-          <UIClient config={config}></UIClient>
+          <UIClient
+            config={config}
+            handleUserClick={submitPositiveResult}
+          ></UIClient>
         </ErrorBoundary>
       </div>
     </>

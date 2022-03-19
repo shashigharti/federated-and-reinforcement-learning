@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { processPlot } from "./common";
 import Plot from "react-plotly.js";
 import axios from "axios";
-import { META_DATA, BOOK_TYPES, OPTION_TYPES } from "./data";
+import { META_DATA, BOOK_TYPES, OPTION_TYPES, WEB_OPTIONS } from "./data";
 
 const MainPage = () => {
   let [models, setModels] = useState([]);
@@ -14,7 +14,7 @@ const MainPage = () => {
   const [value, setValue] = React.useState(0);
   const [modelType, setModelType] = React.useState("");
   let config = {
-    //headers: { "Access-Control-Allow-Origin": "*" },
+    // headers: { "Access-Control-Allow-Origin": "*" },
   };
 
   const getModels = () => {
@@ -64,10 +64,12 @@ const MainPage = () => {
       return parseFloat(x, 10);
     });
 
-    if (modelType == "ui-client") {
+    if (modelType == "book-client") {
+      setPlotData(processPlot(alphas, betas, BOOK_TYPES));
+    } else if (modelType == "ui-client") {
       setPlotData(processPlot(alphas, betas, OPTION_TYPES));
     } else {
-      setPlotData(processPlot(alphas, betas, BOOK_TYPES));
+      setPlotData(processPlot(alphas, betas, WEB_OPTIONS));
     }
   };
 

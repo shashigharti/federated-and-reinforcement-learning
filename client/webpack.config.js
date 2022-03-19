@@ -71,9 +71,6 @@ module.exports = () => {
     },
     devServer: {
       historyApiFallback: true,
-      proxy: {
-        "/api": env.API_ENDPOINT,
-      },
       contentBase: "./",
       hot: true,
     },

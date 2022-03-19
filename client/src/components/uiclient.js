@@ -224,8 +224,7 @@ const Footer = () => {
   );
 };
 
-const UIClient = ({ config }) => {
-  // let [uiconfig, setUIConfig] = useState(config);
+const UIClient = ({ config, handleUserClick }) => {
   const showVision = () => {
     return config.buttonPosition === "vision" ? "" : "hide";
   };
@@ -248,6 +247,7 @@ const UIClient = ({ config }) => {
             background={config.buttonColor}
             icon={config.buttonIcon}
             className={showHero()}
+            onClick={handleUserClick}
           />
         }
       />
@@ -257,6 +257,7 @@ const UIClient = ({ config }) => {
             background={config.buttonColor}
             icon={config.buttonIcon}
             className={showVision()}
+            onClick={handleUserClick}
           />
         }
       />

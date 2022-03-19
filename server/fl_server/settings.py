@@ -18,7 +18,6 @@ import environ
 # Initialise environment variables
 env = environ.Env()
 environ.Env.read_env()
-END_POINT_LOCALHOST = env("END_POINT_LOCALHOST")
 END_POINT = env("END_POINT")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,10 +35,8 @@ SECRET_KEY = "django-insecure-e!o=z18%hhi(7c-=h8(h5wr(!e9^7r&d5!mreswv6$!l6i1v69
 DEBUG = True
 
 ALLOWED_HOSTS = []
-CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -56,17 +53,40 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
 # CORS_ALLOWED_ORIGINS = [
-#     END_POINT_LOCALHOST,
-#     END_POINT,
+#     "http://localhost:8080",
+#     "http://127.0.0.1:8000",
+#     "http://localhost:8000",
+# ]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+# CORS_ALLOW_HEADERS = [
+#     "accept",
+#     "accept-encoding",
+#     "authorization",
+#     "content-type",
+#     "dnt",
+#     "origin",
+#     "user-agent",
+#     "x-csrftoken",
+#     "x-requested-with",
 # ]
 
 ROOT_URLCONF = "fl_server.urls"
@@ -115,10 +135,21 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "djongo",
+        "CLIENT": {
+            "host": env("DB_HOST"),
+            "username": "admin",
+            "password": "admin123",
+            "name": "federated-learning",
+        },
     }
 }
 
