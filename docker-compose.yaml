@@ -9,8 +9,8 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=admin123
-
   mongo-express:
+    restart: always
     image: mongo-express
     container_name: mongo-express
     ports:
@@ -20,14 +20,20 @@ services:
       - ME_CONFIG_MONGODB_ADMINPASSWORD=admin123
       - ME_CONFIG_MONGODB_SERVER=mongodb
     depends_on:
-      - mongodb
-  
-  front-end:
+      - mongodb  
+  backend:
+    restart: always
     build: ./server
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./server:/code
     ports:
-      - "8000:8000"
+      - 8082:8000
     depends_on:
       - mongodb
+  frontend:
+    build: ./client
+    ports:
+      - 8083:3000
+    environment:
+      - CHOKIDAR_USEPOLLING=true

@@ -145,7 +145,7 @@ DATABASES = {
     "default": {
         "ENGINE": "djongo",
         "CLIENT": {
-            "host": env("DB_HOST"),
+            "host": "mongodb://mongodb:27017",
             "username": "admin",
             "password": "admin123",
             "name": "federated-learning",
