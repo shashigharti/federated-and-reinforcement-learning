@@ -3,3 +3,4 @@ server/db.sqlite3
 __pycache__
 .env
 db.sqlite3
+data

@@ -6,17 +6,35 @@ import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as ss
-from core.serializers import GlobalTrainingCycleSerializer
+from core.serializers import GlobalTrainingCycleSerializer, ServerDataSerializer
 from django.conf import settings
+from django.http import JsonResponse
 
 
 print("endpoint => {}".format(settings.END_POINT))
 
 
 @sync_to_async(thread_sensitive=True)
-def get_model_detail(model_name):
-    obj = ServerData.objects.filter(model_name=model_name).first()
-    return obj
+def get_model_detail(modelname):
+    model_obj = ServerData.objects.filter(model_name=modelname).first()
+    return model_obj
+
+
+@sync_to_async(thread_sensitive=True)
+def get_updated_model_detail(model_id):
+    model_training = GlobalTrainingCycle.objects.filter(server_data_id=model_id).first()
+    return model_training
+
+
+@sync_to_async(thread_sensitive=True)
+def update_model(model_id, mdata):
+    print("[Socket]Update model status")
+    response = requests.put(
+        "{}/api/models/update/{}/".format(settings.END_POINT, model_id),
+        json=mdata,
+    )
+    print(response.json())
+    return response.json()
 
 
 @sync_to_async(thread_sensitive=True)
@@ -61,19 +79,34 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
     mode = "registration"  # registration|training|avg
     isCycleEnd = False
     rounds = 0  # total number of rounds
-    current_model_id = 1
+    current_model = ""
     global_training_cycle_id = 0
 
-    async def connect(self):
+    def reset(self):
+        self.weights = {}
+        self.clients = {}
+        self.mode = "registration"  # registration|training|avg
+        self.isCycleEnd = False
+        self.rounds = 0  # total number of rounds
+        self.current_model = ""
+        self.global_training_cycle_id = 0
+
+    async def init(self):
         self.room_name = str(self.scope["url_route"]["kwargs"]["model_name"])
         self.room_group_name = str(self.scope["url_route"]["kwargs"]["model_name"])
 
-        print("\n\n[Socket] NEW CONNECTIONS", self.room_name)
+        print("\n\n[Socket] New Connections", self.room_name)
         print("[Socket] init params")
 
         model_obj = await get_model_detail(self.room_group_name)
-        alphas = [int(x) for x in getattr(model_obj, "alphas").split(",")]
-        betas = [int(x) for x in getattr(model_obj, "betas").split(",")]
+        model_weights = await get_updated_model_detail(getattr(model_obj, "id"))
+        if model_weights == None:
+            alphas = [float(x) for x in getattr(model_obj, "alphas").split(",")]
+            betas = [float(x) for x in getattr(model_obj, "betas").split(",")]
+        else:
+            alphas = [float(x) for x in getattr(model_weights, "end_alphas").split(",")]
+            betas = [float(x) for x in getattr(model_weights, "end_betas").split(",")]
+
         dim = getattr(model_obj, "options")
         max_workers = getattr(model_obj, "max_workers")
 
@@ -97,6 +130,8 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
             )
         )
 
+    async def connect(self):
+        await self.init()
         # Join room group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
@@ -112,6 +147,9 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
         client_id = response_from_user.get("client_id", None)
 
         print("[Socket] Data received:{}".format(text_data))
+        print("[Socket] Mode:{}".format(self.mode))
+        print("[Socket] Event:{}".format(event))
+        print("[Socket] client_id:{}".format(client_id))
         if event == "connected":
             self.room_name = response_from_user.get("model_name", None)
             if self.mode == "training":
@@ -156,22 +194,51 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                         print(
                             "\n\n\n[Socket] ============== Training Mode Started ================== "
                         )
+
                         serverdata = await get_model_detail(self.room_group_name)
-                        pdata = {
-                            "server_data": getattr(serverdata, "id"),
-                            "start_alphas": getattr(serverdata, "alphas"),
-                            "start_betas": getattr(serverdata, "betas"),
-                            "end_alphas": "0,0,0",
-                            "end_betas": "0,0,0",
-                            "cycle_status": "training",
-                            "n_worker_participated": getattr(serverdata, "max_workers"),
-                            "config": "{}",
-                        }
+                        model_weights = await get_updated_model_detail(
+                            getattr(serverdata, "id")
+                        )
+                        if model_weights == None:
+                            pdata = {
+                                "server_data": getattr(serverdata, "id"),
+                                "start_alphas": getattr(serverdata, "alphas"),
+                                "start_betas": getattr(serverdata, "betas"),
+                                "end_alphas": getattr(serverdata, "alphas"),
+                                "end_betas": getattr(serverdata, "alphas"),
+                                "cycle_status": "training",
+                                "n_worker_participated": getattr(
+                                    serverdata, "max_workers"
+                                ),
+                                "config": "{}",
+                            }
+                        else:
+                            pdata = {
+                                "server_data": getattr(serverdata, "id"),
+                                "start_alphas": getattr(model_weights, "start_alphas"),
+                                "start_betas": getattr(model_weights, "start_betas"),
+                                "end_alphas": getattr(model_weights, "end_alphas"),
+                                "end_betas": getattr(model_weights, "end_alphas"),
+                                "cycle_status": "training",
+                                "n_worker_participated": getattr(
+                                    serverdata, "max_workers"
+                                ),
+                                "config": "{}",
+                            }
 
                         # Create training data
                         data = await create_training(pdata)
                         self.global_training_cycle_id = data["id"]
-                        print("Training registered")
+                        print("[Socket]Training registered")
+
+                        # Update server status
+                        sdata = await get_model_detail(self.room_name)
+                        server_data_serializer = ServerDataSerializer(sdata)
+                        sdata = server_data_serializer.data
+                        print("[Socket]sdata:room_name =", sdata, self.room_name)
+                        sdata["status"] = "training"
+                        await update_model(sdata["id"], sdata)
+                        print("[Socket]Update model")
 
                     else:
                         print(
@@ -274,7 +341,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
                     pdata["end_betas"] = ",".join(
                         [str(al) for al in self.weights[self.room_group_name]["betas"]]
                     )
-                    pdata["cycle_status"] = "inactive"
+                    pdata["cycle_status"] = "training"
                     pdata["rounds"] = self.clients[self.room_group_name][
                         "cycle"
                     ]  # self.cycle
@@ -311,6 +378,24 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
 
             else:
                 self.isCycleEnd = False
+        elif event == "end-of-training":
+            print("[Socket] Reset, Update Status")
+            # Update training data
+            pdata = await get_training_detail(self.global_training_cycle_id)
+            globaltrainingcycle = GlobalTrainingCycleSerializer(pdata)
+            pdata = globaltrainingcycle.data
+            pdata["cycle_status"] = "inactive"
+            print("[Socket] pdata", pdata)
+            await update_training(self.global_training_cycle_id, pdata)
+
+            # Update server status
+            sdata = await get_model_detail(self.room_name)
+            server_data_serializer = ServerDataSerializer(sdata)
+            sdata = server_data_serializer.data
+            sdata["status"] = "inactive"
+            await update_model(sdata["id"], sdata)
+            print("[Socket]Update model")
+            self.reset()
 
         if response_to_user != "":
             print("[Socket] Sending data:{}".format(response_to_user))
@@ -322,7 +407,7 @@ class FlConsumer(AsyncJsonWebsocketConsumer):
             )
             if self.isCycleEnd:
                 print(
-                    "Cycle {} - End of cycle".format(
+                    "[Socket]Cycle {} - End of cycle".format(
                         self.clients[self.room_group_name]["cycle"]
                     )
                 )

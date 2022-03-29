@@ -9,6 +9,8 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=admin123
+    volumes:
+     - ./data/mongo:/data/db
   mongo-express:
     restart: always
     image: mongo-express
