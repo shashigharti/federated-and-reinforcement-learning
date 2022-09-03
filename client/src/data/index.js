@@ -90,25 +90,25 @@ const META_DATA = {
   6: {
     base_url: "web-client",
     no_of_clients: 1,
-    dim: 3,
+    dim: 24,
     description: "Web Client; No preference change and one client only",
     has_nested_route: "false",
     model_name: "example_6",
     change_policy: false,
-    change_prob_idxs: { 0: [0] }, // indexes for probability value change
-    change_probs: { 0: [0.7] }, // probability value for different indexes given by change_prob_idxs
+    change_prob_idxs: { 0: [0], 1: [1] }, // indexes for probability value change
+    change_probs: { 0: [0.8], 1: [0.8] }, // probability value for different indexes given by change_prob_idxs
   },
   7: {
     base_url: "web-client",
     no_of_clients: 2,
-    dim: 3,
+    dim: 24,
     description:
       "Web Client; No preference change and two clients with different probabilities",
     has_nested_route: "false",
     model_name: "example_7",
     change_policy: false,
-    change_prob_idxs: { 0: [0], 1: [1] }, // indexes for probability value change
-    change_probs: { 0: [0.8], 1: [0.8] }, // probability value for different indexes given by change_prob_idxs
+    change_prob_idxs: { 0: [0, 4], 1: [1, 1] }, // indexes for probability value change
+    change_probs: { 0: [0.7, 0.8], 1: [0.7, 0.7] }, // probability value for different indexes given by change_prob_idxs
   },
 };
 

@@ -14,7 +14,6 @@
   "dependencies": {
     "@emotion/core": "^10.0.28",
     "@fortawesome/fontawesome-free": "^5.13.1",
-    "@openmined/syft.js": "github:openmined/syft.js",
     "@tensorflow/tfjs": "^3.11.0",
     "@tensorflow/tfjs-core": "^3.12.0",
     "axios": "^0.25.0",

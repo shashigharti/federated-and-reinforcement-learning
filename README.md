@@ -54,3 +54,12 @@ Go to path server > fl_server
 ### Run Client
 
 - npm run start
+
+## Run using Docker
+- docker up -d
+
+API_ENDPOINT=http://0.0.0.0:8082
+WS_ENDPOINT=0.0.0.0:8082
+MODE=development
+STOP_AFTER=100
+SIMULATION=True

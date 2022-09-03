@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { MainPage, AdminPage, BookClientPage, UIClientPage } from "./src/pages";
+import { MainPage, AdminPage, BookClientPage, UIClientPage, WebClientPage } from "./src/pages";
 
 const App = () => {
   return (
@@ -11,6 +11,7 @@ const App = () => {
           <Route path='admin' element={<AdminPage />} />
           <Route path='book-client/:id' element={<BookClientPage />} />
           <Route path='ui-client/:id/:clientid' element={<UIClientPage />} />
+          <Route path='web-client/:id/:clientid' element={<WebClientPage />} />
         </Routes>
       </BrowserRouter>
     </>
