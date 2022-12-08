@@ -70,6 +70,7 @@ module.exports = () => {
       "@tensorflow/tfjs-core": "tf",
     },
     devServer: {
+      disableHostCheck: true,
       historyApiFallback: true,
       contentBase: "./",
       hot: true,

@@ -67,7 +67,7 @@ const MainPage = () => {
 
     if (modelType == "book-client") {
       setPlotData(processPlot(alphas, betas, BOOK_TYPES));
-    } else if (modelType == "ui-client") {
+    } else if (modelType == "ui-client" || modelType == "web-client") {
       setPlotData(processPlot(alphas, betas, OPTION_TYPES));
     } else {
       setPlotData(processPlot(alphas, betas, WEB_OPTIONS));
