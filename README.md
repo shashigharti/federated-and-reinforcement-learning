@@ -1,65 +1,37 @@
-# About project
+# syft.js Multi-armed Bandit Example (Research Project)
 
-This is a research project related to reinforcement learning/multiarmed bandit/federated learing.
+This is a demonstration of how to use RLto train [a multi-armed bandit](https://vwo.com/blog/multi-armed-bandit-algorithm/) in the browser. A multi-armed bandit can be used to perform automated A/B testing on a website or application, while gradually converging your users to the ideal user-experience, given a goal of your choosing.
 
-# Team Members
+In this demo, we're automatically generating various website layouts that we want our users to view. There are subtle changes made to the website every time you load the website again, including things like changes in button size, color, or position on the page. In the background, syft.js will track which layouts the user does what we want (click a button) and report a positive model diff for that particular layout. For all other layouts where the user doesn't click on the button, we do not report anything. Over time, our model will slowly start to converge on a "preferred user experience" for the best layout, as chosen by user actions.
 
-- Maddie Shang (Team Lead)
-- Shashi Gharti
+While this demo is inherently simple, it's easy to see how one could extend it to a real-world application whereby website layouts are generated and tested by real users, slowly converging to the preferred UX. We're particuarly excited to see derivations of this demo in real-world web and mobile development!
 
-# Folder structure:
+## Quick Start (Docker)
 
-- Backend server folder (django) => server
-- Frontend client => client
+1. Run 
+    ``` 
+    docker compose up
+    ```
+    This will start a backend server(Federated Learning Aggregation ) and a dashboard(Visual display of training).
+    ### 1.1 Set ENV
 
-# Getting Started
+    Go to path server > fl_server
+    - Rename .env.sample file to .env
 
-## Backend Server
+    ### 1.2 Run Migrations
+    - python manage.py makemigrations
+    - python manage.py migrate
 
-Create virtual env for python and run the following commands:
+    ### 1.3 Seed ServerData Table
+    - python manage.py loaddata core/fixtures/init-data.json
 
-### Install dependencies
+2. Start the website (in Firefox)
+   ``` 
+   cd website
+   npm run website
+   ```
+   This will start the website on which we apply/use RL(Reinforcement learning) and FL(Federated Learning).
+3. Install the webextension https://github.com/shashigharti/browser-extension-user-privacy
 
-- Go to the folder server and install dependencies
-  pip install -r requirements.php
 
-### Set ENV
-
-Go to path server > fl_server
-
-- Rename .env.sample file to .env
-
-### Run Migrations
-
-- python manage.py makemigrations
-- python manage.py migrate
-
-### Seed ServerData Table
-
-- python manage.py loaddata core/fixtures/init-data.json
-
-### Run Server
-
-- python manage.py runserver
-
-## Frontend Server
-
-- Go to the client folder and install dependencies
-  npm install
-
-### Set ENV
-
-- Rename .env.sample file to .env
-
-### Run Client
-
-- npm run start
-
-## Run using Docker
-- docker up -d
-
-API_ENDPOINT=http://0.0.0.0:8082
-WS_ENDPOINT=0.0.0.0:8082
-MODE=development
-STOP_AFTER=100
-SIMULATION=True
+Author: Maddie Shang, Shashi Gharti
