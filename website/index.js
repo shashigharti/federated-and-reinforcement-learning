@@ -55,17 +55,22 @@ const UIClientPage = () => {
     
     const fetchParamFromServer = async () => {
         const response = await fetch(`http://localhost:8082/api/trainings/6`);
-        const data = await response.json();
-        return data   
+        return await response.json();   
     }
 
     const resetParams = () => {           
         console.log("[Website]Fetching Params from the Server!");
         fetchParamFromServer().then((data) => {
-            let new_alphas = data[0]["end_alphas"].split(",").map(v => Number(v)),
-                new_betas = data[0]["end_betas"].split(",").map(v => parseFloat(v)); 
-            console.log("[Website] From Server Alphas Array", new_alphas);
-            console.log("[Website] From Server Betas Array", new_betas);
+            console.log("[Website] Response from server", data)     
+            let new_alphas = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                new_betas = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            if (data.length > 0) {
+                new_alphas = data[0]["end_alphas"].split(",").map(v => Number(v)),
+                    new_betas = data[0]["end_betas"].split(",").map(v => parseFloat(v)); 
+                console.log("[Website] From Server Alphas Array", new_alphas);
+                console.log("[Website] From Server Betas Array", new_betas);
+            }
+            console.log("[Website] New alphas, Betas", new_alphas, new_betas);
             setAlphasArray(new_alphas);
             setBetasArray(new_betas);
           });

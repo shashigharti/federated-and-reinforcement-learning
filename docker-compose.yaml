@@ -23,7 +23,7 @@ services:
       - ME_CONFIG_MONGODB_SERVER=mongodb
     depends_on:
       - mongodb  
-  backend:
+  server:
     restart: always
     build: ./server
     command: python manage.py runserver 0.0.0.0:8000
@@ -33,7 +33,8 @@ services:
       - 8082:8000
     depends_on:
       - mongodb
-  frontend:
+  client:
+    restart: always
     build: ./client
     ports:
       - 8083:3000
