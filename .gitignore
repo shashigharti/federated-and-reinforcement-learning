@@ -1,5 +1,5 @@
 client/node_modules
-client//dist
+client/dist
 website/node_modules
 website/dist
 server/db.sqlite3
