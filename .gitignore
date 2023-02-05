@@ -1,4 +1,7 @@
 client/node_modules
+client//dist
+website/node_modules
+website/dist
 server/db.sqlite3
 __pycache__
 .env

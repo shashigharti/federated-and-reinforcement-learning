@@ -6,13 +6,13 @@ In this demo, we're automatically generating various website layouts that we wan
 
 While this demo is inherently simple, it's easy to see how one could extend it to a real-world application whereby website layouts are generated and tested by real users, slowly converging to the preferred UX. We're particuarly excited to see derivations of this demo in real-world web and mobile development!
 
-## Quick Start (Docker)
-
-1. Run 
-    ``` 
-    docker compose up
+## Quick Start (Docker, DB and Backend)
+1. Install dependencies
     ```
-    This will start a backend server(Federated Learning Aggregation ) and a dashboard(Visual display of training).
+    cd client
+    npm install
+    ```
+2. Set env
     ### 1.1 Set ENV
 
     Go to path server > fl_server
@@ -24,14 +24,21 @@ While this demo is inherently simple, it's easy to see how one could extend it t
 
     ### 1.3 Seed ServerData Table
     - python manage.py loaddata core/fixtures/init-data.json
-
-2. Start the website (in Firefox)
+3. Run database and backend
+    ``` 
+    docker compose up
+    ```
+    This will start a backend server(Federated Learning Aggregation ) and a dashboard(Visual display of training).
+## Start website and webextension
+1. Start the website (in Firefox)
    ``` 
    cd website
+   npm install
    npm run website
    ```
    This will start the website on which we apply/use RL(Reinforcement learning) and FL(Federated Learning).
-3. Install the webextension https://github.com/shashigharti/browser-extension-user-privacy
+## Install webextension
+1. Install the webextension https://github.com/shashigharti/browser-extension-user-privacy
 
 
 Author: Maddie Shang, Shashi Gharti
