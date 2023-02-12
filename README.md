@@ -1,4 +1,4 @@
-# syft.js Multi-armed Bandit Example (Research Project)
+# Multi-armed Bandit Example (Research Project)
 
 This is a demonstration of how to use RLto train [a multi-armed bandit](https://vwo.com/blog/multi-armed-bandit-algorithm/) in the browser. A multi-armed bandit can be used to perform automated A/B testing on a website or application, while gradually converging your users to the ideal user-experience, given a goal of your choosing.
 
