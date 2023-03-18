@@ -6,39 +6,55 @@ In this demo, we're automatically generating various website layouts that we wan
 
 While this demo is inherently simple, it's easy to see how one could extend it to a real-world application whereby website layouts are generated and tested by real users, slowly converging to the preferred UX. We're particuarly excited to see derivations of this demo in real-world web and mobile development!
 
-## Quick Start (Docker, DB and Backend)
+## Quick Start (Using docker)
 1. Install dependencies
-    ```
+    ```shell
     cd client
     npm install
     ```
 2. Set env
     ### 1.1 Set ENV
 
-    Go to path server > fl_server
-    - Rename .env.sample file to .env
+    Go to folder server > fl_server
+    - Copy .env.sample file to .env
 
-    ### 1.2 Run Migrations
-    - python manage.py makemigrations
-    - python manage.py migrate
+    Go to folder client
+    - Copy .env.sample file to .env
 
-    ### 1.3 Seed ServerData Table
-    - python manage.py loaddata core/fixtures/init-data.json
-3. Run database and backend
-    ``` 
+    Env samples for different usecases are in ```envs``` folder.
+    
+3. Start database, client and server
+    ```shell
     docker compose up
     ```
-    This will start a backend server(Federated Learning Aggregation ) and a dashboard(Visual display of training).
+    This will start a backend server(Federated Learning Aggregation ) and a dashboard(Visual display of training). You can test by opening the admin and client as follows:
+    - admin:  http://0.0.0.0:8082/admin
+    - client: http://0.0.0.0:8083/
+
+4. Run migration and seeder
+    ### 4.1 Migrations
+    
+    ```shell
+    docker exec -it <container_id> python manage.py makemigrations
+    docker exec -it <container_id>  python manage.py migrate
+    ```
+    ### 4.2 Seed ServerData Table
+    ```shell
+    python manage.py loaddata core/fixtures/init-data.json
+    ```
+
+## Install webextension
+1. Install the webextension https://github.com/shashigharti/browser-extension-user-privacy
+
+
 ## Start website and webextension
 1. Start the website (in Firefox)
    ``` 
    cd website
    npm install
-   npm run website
+   npm run start
    ```
    This will start the website on which we apply/use RL(Reinforcement learning) and FL(Federated Learning).
-## Install webextension
-1. Install the webextension https://github.com/shashigharti/browser-extension-user-privacy
 
 
 Author: Maddie Shang, Shashi Gharti
